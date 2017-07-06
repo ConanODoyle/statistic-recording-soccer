@@ -6,7 +6,7 @@ $STATTRACK::LoopStatTrackData[0] = "Pos";
 
 //Functions:
 //Packaged:
-//	
+//	GameConnection::startLoad
 //Created:
 //	setStat
 //	GameConnection::setStat
@@ -29,7 +29,29 @@ $STATTRACK::LoopStatTrackData[0] = "Pos";
 
 
 package Support_StatTrack {
+	function GameConnection::startLoad(%this) {
+		%ret = parent::startLoad(%this); //run parent first, client will be deleted if bad client object
 
+		if (!isObject(%this)) { //should never be run, but doesn't hurt to be safe
+			return %ret;
+		}
+
+		if (isEventPending($LoopStatTrackSched)) {
+			for (%i = 0; %i < $StatTrack_Looped__TotalClients; %i++) { //check if client already recorded in table
+				if (getField($StatTrack_Looped__ClientTable[%i], 1) $= %this.bl_id) {
+					if (getField($StatTrack_Looped__ClientTable[%i], 0) !$= %this.name) {
+						$StatTrack_Looped__ClientTable[%i] = %this.name TAB %this.bl_id;
+					}
+					return %ret;
+				}
+			}
+			//client not found in table, add to table
+			$StatTrack_Looped__ClientTable[%i + 1] = %this.name TAB %this.bl_id;
+			$StatTrack_Looped__TotalClients++;
+		}
+
+		return %ret;
+	}
 };
 activatePackage(Support_StatTrack);
 
