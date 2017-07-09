@@ -3,14 +3,20 @@ datablock ProjectileData(ghostSoccerBallProjectile : soccerBallProjectile) {
 	uiname = "Ghost Soccer Ball";
 };
 
+datablock StaticShapeData(SoccerBallShape)
+{
+    shapeFile = "Add-Ons/Item_Sports/soccerBall.dts";
+    //base scale of shape is .2 .2 .2
+};
+
+
 if (!isObject(GlobalSoccerTracerSet)) {
-	new QueueSO(GlobalSoccerTracerSet) {};
+	new SimSet(GlobalSoccerTracerSet) {};
 }
 
 package GBFL_GhostSoccerBall {
 	function Projectile::onAdd(%proj) {
 		if (%proj.getDatablock().getID() == ghostSoccerBallProjectile.getID()) {
-			startSoccerTracer(%proj, getRandom() SPC getRandom() SPC getRandom() SPC "1");
 		} else if (%proj.getDatablock().getID() == soccerBallProjectile.getID()) {
 			// %ghost = new Projectile(ghostBalls) {
 			// 	datablock = ghostSoccerBallProjectile;
@@ -24,6 +30,7 @@ package GBFL_GhostSoccerBall {
 			// talk("Created ghost ball...");
 			%proj.tracerColor = %color = getRandom() SPC getRandom() SPC getRandom() @ " 1";
 			initsoccerRaycastTracerLoop(%proj);
+			startSoccerTracer(%proj, "1 1 1 0.5");
 		}
 		return parent::onAdd(%proj);
 	}
@@ -31,7 +38,7 @@ package GBFL_GhostSoccerBall {
 	function SoccerBallProjectile::onCollision(%db, %proj, %hit, %scale, %pos, %norm) {
 		if (%hit.getClassName() $= "Player" || %hit.getClassName() $= "AIPlayer" || %hit.getClassName() $= "fxDTSBrick") {
 			%ret = parent::onCollision(%db, %proj, %hit, %scale, %pos, %norm);
-			schedule(1, %proj, initSoccerRaycastTracerLoop, %proj, %hit);
+			schedule(1, %proj, initSoccerRaycastTracerLoop, %proj, %hit, 1);
 			// talk(%proj.getVelocity());
 			// talk(%proj.getPosition());
 			return %ret;
@@ -73,23 +80,50 @@ function cullGlobalSoccerTracers() {
 		return;
 	}
 
-	while (GlobalSoccerTracerSet.getCount() > 8) {
-		%simSet = GlobalSoccerTracerSet.pop();
-		%simSet.deleteAll();
-		%simSet.delete();
+	%max = 8;
+	if ((%ct = GlobalSoccerTracerSet.getCount()) > %max) {
+		%simSet = GlobalSoccerTracerSet.getObject(%ct - %max - 1);
+		%simColor = %simSet.color;
+		while (%count < 10 && %simSet.color $= %simColor) {
+			for (%i = 0; %i < %simSet.getCount(); %i++) {
+				(%shape = %simSet.getObject(%i)).hideNode("ALL");
+				if (%shape.getShapeName() !$= "") {
+					%shape.originalShapeName = %shape.getShapeName();
+					%shape.setShapeName("");
+				}
+			}
+			%simSet = %simSet = GlobalSoccerTracerSet.getObject(%ct - %max + %count);
+			%count++;
+		}
 	}
 }
 
-function initSoccerRaycastTracerLoop(%proj, %hit) {
-	// %simSet = new SimSet(soccerTracers) { color = %proj.tracerColor; };
-	// GlobalSoccerTracerSet.push(%simSet);
-	// cullGlobalSoccerTracers();
-	soccerRaycastTracerLoop(%proj.getPosition(), %proj.getVelocity(), %proj.tracerColor, %hit, 0, %simSet);
+function initSoccerRaycastTracerLoop(%proj, %hit, %bounce) {
+	%simSet = new SimSet(soccerTracers) { color = %proj.tracerColor; };
+	GlobalSoccerTracerSet.add(%simSet);
+	cullGlobalSoccerTracers();
+
+	if (!%bounce) {
+		%playerShape = drawLine(%proj.getPosition(), %proj.getPosition(), "0.5 0.5 1 0.5", 1);
+		%playerShape.setDatablock(SoccerBallShape);
+		%playerShape.createBoxAt(%proj.getPosition(), "0.5 0.5 1 0.5", 1);
+		if (isObject(%proj.client)) {
+			%playerShape.setShapeName("KCK: " @ %proj.client.name);
+			%playerShape.setShapeNameColor("0 1 0");
+		}
+		%simSet.add(%playerShape);
+	}
+
+	%pos = %proj.getPosition();
+	%adjust = "0 0 0";
+	%finalPos = vectorAdd(%pos, %adjust);
+
+	soccerRaycastTracerLoop(%finalPos, %proj.getVelocity(), %proj.tracerColor, %hit, 0, %simSet);
 }
 
-$mod = -10;
+$mod = -10.1;
 function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
-	if (%count > 10000) {// || !isObject(%simSet)) {
+	if (%count > 10000 || !isObject(%simSet)) {
 		return;
 	}
 
@@ -102,52 +136,59 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 	%ray = containerRaycast(%pos, %nextPos, $TypeMasks::PlayerObjectType, %ignore);
 	if (isObject(getWord(%ray, 0))) {
 		%loc = getWords(%ray, 1, 3);
-		%playerShape = drawLine(%loc, %loc, "0.5 0.5 1 0.5", 0.2);
-		%playerShape.createBoxAt(%loc, "0.5 0.5 1 0.5", 0.2);
+		%playerShape = drawLine(%loc, %loc, "0.5 0.5 1 0.5", 1);
+		%playerShape.setDatablock(SoccerBallShape);
+		%playerShape.createBoxAt(%loc, "0.5 0.5 1 0.5", 1);
+		%simSet.add(%playerShape);
 		%ignore = getWord(%ray, 0);
+		if (isObject(%cl = getWord(%ray, 0).client)) {
+			%playerShape.setShapeName("INT: " @ %cl.name);
+		} else {
+			%playerShape.setShapeName("INT");
+		}
+		%playerShape.setShapeNameColor("1 0 0");
 	}
 	//check for bricks hit
 	%ray = containerRaycast(%pos, %nextPos, $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType, %ignore);
 	if (isObject(getWord(%ray, 0))) {
 		%loc = getWords(%ray, 1, 3);
-		%brickShape = drawLine(%loc, %loc, "0.5 1 0.5 0.5", 0.2);
-		%brickShape.createBoxAt(%loc, "0.5 1 0.5 0.5", 0.2);
+		%brickShape = drawLine(%loc, %loc, "0.5 1 0.5 0.5", 1);
+		%brickShape.setDatablock(SoccerBallShape);
+		%brickShape.createBoxAt(%loc, "0.5 1 0.5 0.5", 1);
 		%line = drawLine(%pos, %loc, %color, 0.05);
-		// %simSet.add(%line);
+		%simSet.add(%line);
+		%simSet.add(%brickShape);
 		return;
 	}
 
-	// if (isObject(%brickShape)) { 
-	// 	%simSet.add(%brickShape);
-	// }
-	// if (isObject(%playerShape)) { 
-	// 	%simSet.add(%playerShape);
-	// }
-
 	//check if too close to ground
 	//drawline(%nextpos, vectorAdd(%nextPos, "0 0 -0.5"), "1 1 1 0.5", 0.01);
+	if (%ignore.getClassName() $= "fxDTSBrick") {
+		%ignore = 0;
+	}
+
 	%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.35"), $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType | $TypeMasks::PlayerObjectType, %ignore);
 	if (isObject(getWord(%ray, 0))) {
 		%loc = getWords(%ray, 1, 3);
-		%upperShape = drawLine(%loc, %loc, "1 1 0.5 0.5", 0.2);
-		%upperShape.createBoxAt(%loc, "1 1 0.5 0.5", 0.2);
+		%upperShape = drawLine(%loc, %loc, "1 1 0.5 0.5", 1);
+		%upperShape.setDatablock(SoccerBallShape);
+		%upperShape.createBoxAt(%loc, "1 1 0.5 0.5", 1);
 		%line = drawLine(%pos, %loc, %color, 0.05);
-		if (getWord(%ray, 0).getClassName() !$= "Player") {
-			// %simSet.add(%line);
-			// %simSet.add(%upperShape);
-			return;	
-		}
+	
+		%simSet.add(%line);
+		%simSet.add(%upperShape);
+		return;
 	} else {
 		%line = drawLine(%pos, %nextPos, %color, 0.05);
 	}
 	%nextPos = vectorAdd(%pos, vectorScale(%vel, 0.032));
 
-	// if (isObject(%upperShape)) { 
-	// 	%simSet.add(%upperShape);
-	// }
-	// if (isObject(%line)) { 
-	// 	%simSet.add(%line);
-	// }
+	if (isObject(%upperShape)) { 
+		%simSet.add(%upperShape);
+	}
+	if (isObject(%line)) { 
+		%simSet.add(%line);
+	}
 
 	schedule(32, 0, soccerRaycastTracerLoop, %nextPos, %nextVel, %color, %ignore, %count+1, %simSet);
 }
