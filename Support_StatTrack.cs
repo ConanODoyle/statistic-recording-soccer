@@ -19,6 +19,7 @@ $STATTRACK::LoopStatTrackData[0] = "Pos";
 //	initLoopStatTrack
 //	loopStatTrack
 //	stopLoopStatTrack
+//	GameConnection::getPosStatData
 //
 //	fxDTSBrick::initLoopStatTrack - EVENT
 //	fxDTSBrick::stopLoopStatTrack - EVENT
@@ -115,8 +116,8 @@ function loopStatTrack(%interval) {
 		%dataType = $STATTRACK::LoopStatTrackData[%j];
 		for (%i = 0; %i < ClientGroup.getCount(); %i++) {
 			%cl = ClientGroup.getObject(%i);
-			eval("$LastData = " @ %cl @ ".get" @ %dataType @ "StatData()");
-			$StatTrack_Looped_[%cl.name @ "_" @ %dataType @ "_Tick" @ $StatTrack_Looped_Tick] = $LastData;
+			eval("$LastData = " @ %cl @ ".get" @ %dataType @ "StatData()"); //create a GameConnection function with the name get[StatName]StatData() that returns said value
+			$StatTrack_Looped_[%cl.bl_id @ "_" @ %dataType @ "_Tick" @ $StatTrack_Looped_Tick] = $LastData;
 		}	
 	}
 	$StatTrack_Looped_Tick++;
@@ -132,6 +133,14 @@ function stopLoopStatTrack() {
 	
 	export("$StatTrack_Looped_*", $STATTRACK::DEST @ "PosData/" @ getCleanDateString($StatTrack_Looped__StartTime) @ ".cs");
 	messageAdmins("\c4Looped interval data recorded to \c3" @ $STATTRACK::DEST @ "PosData/" @ stripChars($StatTrack_Looped__StartTime, "/\\:<>$" @ ".cs");
+}
+
+function GameConnection::getPosStatData(%cl) {
+	if (isObject(%cl.player)) {
+		return %cl.player.getPosition();
+	} else {
+		return "NOT SPAWNED";
+	}
 }
 
 
