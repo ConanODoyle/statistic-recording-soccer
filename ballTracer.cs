@@ -10,11 +10,26 @@ datablock StaticShapeData(SoccerBallShape)
 };
 
 
+//Functions:
+//Packaged:
+//	Projectile::onAdd
+//	SoccerBallProjectile::onCollision
+//Created:
+//	startSoccerTracer //straight projectile tracking
+//	soccerTracerLoop
+//
+//	cullGlobalSoccerTracers
+//	initSoccerRaycastTracerLoop //modeled projectile tracking using raycasts
+//	soccerRaycastTracerLoop
+//	clearLines
+//	serverCmdClearLines
+
+
 if (!isObject(GlobalSoccerTracerSet)) {
 	new SimSet(GlobalSoccerTracerSet) {};
 }
 
-package GBFL_GhostSoccerBall {
+package GBFL_SoccerBallTracer {
 	function Projectile::onAdd(%proj) {
 		if (%proj.getDatablock().getID() == ghostSoccerBallProjectile.getID()) {
 		} else if (%proj.getDatablock().getID() == soccerBallProjectile.getID()) {
@@ -29,8 +44,8 @@ package GBFL_GhostSoccerBall {
 			// MissionCleanup.add(%ghost);
 			// talk("Created ghost ball...");
 			%proj.tracerColor = %color = getRandom() SPC getRandom() SPC getRandom() @ " 1";
-			initsoccerRaycastTracerLoop(%proj);
-			startSoccerTracer(%proj, "1 1 1 0.5");
+			initSoccerRaycastTracerLoop(%proj);
+			// startSoccerTracer(%proj, "1 1 1 0.5");
 		}
 		return parent::onAdd(%proj);
 	}
@@ -46,7 +61,7 @@ package GBFL_GhostSoccerBall {
 		return parent::onCollision(%db, %proj, %hit, %scale, %pos, %norm);
 	}
 };
-activatePackage(GBFL_GhostSoccerBall);
+activatePackage(GBFL_SoccerBallTracer);
 
 function startSoccerTracer(%proj, %color) {
 	cancel(%proj.soccerTracerLoop);
@@ -74,6 +89,10 @@ function soccerTracerLoop(%proj, %color) {
 	%proj.soccerTracerLoop = schedule(100, %proj, soccerTracerLoop, %proj, %color);
 	// talk(getWord(%proj.getVelocity(), 2));
 }
+
+
+////////////////////
+
 
 function cullGlobalSoccerTracers() {
 	if (!isObject(GlobalSoccerTracerSet)) {
@@ -200,5 +219,14 @@ function clearLines() {
 	}
 	while (isObject(ShapeLines)) {
 		ShapeLines.delete();
+	}
+}
+
+function serverCmdClearLines(%cl) {
+	if (%cl.isSuperAdmin) {
+		clearLines();
+		messageClient(%cl, '', "\c5Lines have been cleared");
+	} else {
+		messageClient(%cl, '', "You must be a Super Admin to use this command");
 	}
 }

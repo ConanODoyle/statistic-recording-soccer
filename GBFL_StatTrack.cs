@@ -8,6 +8,13 @@ $STATTRACK::LoopStatTrackData[1] = "HasBall";
 //	GameConnection::getHasBallStatData		RECORDING POS/OWNERSHIP
 
 
+package GBFL_StatTrack {
+	function soccerBallImage::onFire(%db, %obj, %slot) {
+		parent::soccerBallImage::onFire(%db, %obj, %slot);
+		setStat("SoccerKick" @ (getStat("SoccerKickCount") + 0) 
+	}
+};
+activatePackage(GBFL_StatTrack);
 
 function GameConnection::getTransformStatData(%cl) {
 	if (!isObject(%cl.player)) {
