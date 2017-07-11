@@ -50,9 +50,10 @@ function StaticShape::createBoxAt(%this, %pos, %color, %scale) {
     } else {
         %this.startFade(0, 0, 0);
     }
+    return %this;
 }
 
-function drawLine(%start, %end, %color, %radius) {
+function drawLine(%start, %end, %color, %width) {
     if (%width < 0.05) {
         %width = 0.05;
     }
@@ -64,6 +65,20 @@ function drawLine(%start, %end, %color, %radius) {
         datablock = C_SquareShape;
     };
     return %shape.drawLine(%start, %end, %color, %width, 0);
+}
+
+function createBoxAt(%pos, %color, %scale) {
+    if (%width < 0.05) {
+        %width = 0.05;
+    }
+
+    if (%color $= "") {
+        %color = $defaultColor;
+    }
+    %shape = new StaticShape(ShapeLines) {
+        datablock = C_SquareShape;
+    };
+    return %shape.createBoxAt(%pos, %color, %scale);
 }
 
 function clearLines() {

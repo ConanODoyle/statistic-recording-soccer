@@ -132,7 +132,7 @@ function stopLoopStatTrack() {
 	$StatTrack_Looped__RealEndTime = getRealTime();
 	
 	export("$StatTrack_Looped_*", $STATTRACK::DEST @ "PosData/" @ getCleanDateString($StatTrack_Looped__StartTime) @ ".cs");
-	messageAdmins("\c4Looped interval data recorded to \c3" @ $STATTRACK::DEST @ "PosData/" @ stripChars($StatTrack_Looped__StartTime, "/\\:<>$" @ ".cs");
+	messageAdmins("\c4Looped interval data recorded to \c3" @ $STATTRACK::DEST @ "PosData/" @ stripChars($StatTrack_Looped__StartTime, "/\\:<>$" @ ".cs"));
 }
 
 function GameConnection::getPosStatData(%cl) {
