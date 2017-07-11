@@ -21,6 +21,7 @@ datablock StaticShapeData(SoccerBallShape)
 //	cullGlobalSoccerTracers
 //	initSoccerRaycastTracerLoop //modeled projectile tracking using raycasts
 //	soccerRaycastTracerLoop
+//	soccerGetEndPos
 //	clearLines
 //	serverCmdClearLines
 //
@@ -50,7 +51,7 @@ package GBFL_SoccerBallTracer {
 			// MissionCleanup.add(%ghost);
 			// talk("Created ghost ball...");
 			%proj.tracerColor = %color = getRandom() SPC getRandom() SPC getRandom() @ " 1";
-			initSoccerRaycastTracerLoop(%proj);
+			schedule(10, %proj, initSoccerRaycastTracerLoop, %proj);
 			// startSoccerTracer(%proj, "1 1 1 0.5");
 		}
 		return parent::onAdd(%proj);
@@ -136,20 +137,20 @@ function initSoccerRaycastTracerLoop(%proj, %hit, %bounce) {
 	GlobalSoccerTracerSet.add(%simSet);
 	cullGlobalSoccerTracers();
 
-	if (!%bounce) {
-		%playerShape = createBoxAt(%proj.getPosition(), "0 0 0 0.5", 1);
-		%playerShape.setDatablock(SoccerBallShape.getID());
-		%playerShape.setNodeColor("ALL", "0 1 0 0.5");
-		%playerShape.setNetFlag(6, 1);
-		if (isObject(%proj.client)) {
-			%playerShape.setShapeName("KCK: " @ %proj.client.name);
-			%playerShape.setShapeNameColor("0 1 0");
-		}
-		%simSet.add(%playerShape);
 
-		setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "BALL" TAB %proj.getTransform() TAB %playerShape.getShapeName() TAB %playerShape.getShapeNameColor());
-		%simSet.tracerNum++;
+	%playerShape = createBoxAt(%proj.getPosition(), "0 0 0 0.5", 1);
+	%playerShape.setDatablock(SoccerBallShape.getID());
+	%playerShape.setNodeColor("ALL", "0 1 0 0.5");
+	%playerShape.setNetFlag(6, 1);
+	if (isObject(%proj.client) && !%bounce) {
+		%playerShape.setShapeName("KCK: " @ %proj.client.name);
+		%playerShape.setShapeNameColor("0 1 0");
 	}
+	%simSet.add(%playerShape);
+
+	setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "BALL" TAB %proj.getTransform() TAB %playerShape.getShapeName() TAB %playerShape.getShapeNameColor());
+	%simSet.tracerNum++;
+
 	setStat("SoccerTracer" @ %simSet.tracerID @ "_Color", %proj.tracerColor);
 
 	%pos = %proj.getPosition();
@@ -159,13 +160,13 @@ function initSoccerRaycastTracerLoop(%proj, %hit, %bounce) {
 	soccerRaycastTracerLoop(%finalPos, %proj.getVelocity(), %proj.tracerColor, %hit, 0, %simSet);
 }
 
-$mod = -10.1;
+$soccerBallGravityMod = -10.1;
 function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 	if (%count > 10000 || !isObject(%simSet)) {
 		return;
 	}
 
-	%nextVel = vectorAdd(%vel, "0 0 " @ ($mod * 0.032));
+	%nextVel = vectorAdd(%vel, "0 0 " @ ($soccerBallGravityMod * 0.032));
 	%nextPos = vectorAdd(%pos, vectorAdd(vectorScale(%vel, 0.032), vectorScale(vectorNormalize(%vel), 0.3)));
 	if (vectorLen(%nextVel) > 200) {
 		%nextVel = vectorScale(vectorNormalize(%nextVel), 200);
@@ -181,9 +182,9 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 		%simSet.add(%playerShape);
 		%ignore = getWord(%ray, 0);
 		if (isObject(%cl = getWord(%ray, 0).client)) {
-			%playerShape.setShapeName("INT: " @ %cl.name);
+			%playerShape.setShapeName("CNT: " @ %cl.name);
 		} else {
-			%playerShape.setShapeName("INT");
+			%playerShape.setShapeName("CNT");
 		}
 		%playerShape.setShapeNameColor("1 0 0");
 
@@ -194,17 +195,17 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 	%ray = containerRaycast(%pos, %nextPos, $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType, %ignore);
 	if (isObject(getWord(%ray, 0))) {
 		%loc = getWords(%ray, 1, 3);
-		%brickShape = createBoxAt(%loc, "0 0 0 0.5", 1);
-		%brickShape.setDatablock(SoccerBallShape.getID());
-		%brickShape.setNodeColor("ALL", "0 0 1 0.5");
-		%brickShape.setNetFlag(6, 1);
+		//%brickShape = createBoxAt(%loc, "0 0 0 0.5", 1);
+		//%brickShape.setDatablock(SoccerBallShape.getID());
+		//%brickShape.setNodeColor("ALL", "0 0 1 0.5");
+		//%brickShape.setNetFlag(6, 1);
 		%line = drawLine(%pos, %loc, %color, 0.05);
 		%line.setNetFlag(6, 1);
 		%simSet.add(%line);
 		%simSet.add(%brickShape);
 
-		setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "BALL" TAB %loc TAB %brickShape.getShapeName() TAB %brickShape.getShapeNameColor());
-		%simSet.tracerNum++;
+		//setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "BALL" TAB %loc TAB %brickShape.getShapeName() TAB %brickShape.getShapeNameColor());
+		//%simSet.tracerNum++;
 		setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "LINE" TAB %pos TAB %loc);
 		%simSet.tracerNum++;
 
@@ -219,21 +220,21 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 		%ignore = 0;
 	}
 
-	%ray = containerRaycast(%pos, vectorAdd(%pos, "0 0 -0.35"), $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType | $TypeMasks::PlayerObjectType, %ignore);
-	if (isObject(getWord(%ray, 0))) {
+	%ray = containerRaycast(%pos, vectorAdd(%pos, "0 0 -0.4"), $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType | $TypeMasks::PlayerObjectType, %ignore);
+	if (isObject(getWord(%ray, 0)) && %count > 1) {
 		%loc = getWords(%ray, 1, 3);
-		%upperShape = createBoxAt(%loc, "0 0 0 0.5", 1);
-		%upperShape.setDatablock(SoccerBallShape.getID());
-		%upperShape.setNodeColor("ALL", "1 1 1 0.5");
-		%upperShape.setNetFlag(6, 1);
+		//%upperShape = createBoxAt(%loc, "0 0 0 0.5", 1);
+		//%upperShape.setDatablock(SoccerBallShape.getID());
+		//%upperShape.setNodeColor("ALL", "1 1 1 0.5");
+		//%upperShape.setNetFlag(6, 1);
 		%line = drawLine(%pos, %loc, %color, 0.05);
 		%line.setNetFlag(6, 1);
 	
 		%simSet.add(%line);
-		%simSet.add(%upperShape);
+		//%simSet.add(%upperShape);
 
-		setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "BALL" TAB %loc TAB %upperShape.getShapeName() TAB %upperShape.getShapeNameColor());
-		%simSet.tracerNum++;
+		//setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "BALL" TAB %loc TAB %upperShape.getShapeName() TAB %upperShape.getShapeNameColor());
+		//%simSet.tracerNum++;
 		setStat("SoccerTracer" @ %simSet.tracerID @ "_" @ %simSet.tracerNum, "LINE" TAB %pos TAB %loc);
 		%simSet.tracerNum++;
 
@@ -255,6 +256,31 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 	schedule(32, 0, soccerRaycastTracerLoop, %nextPos, %nextVel, %color, %ignore, %count+1, %simSet);
 }
 
+function soccerGetEndPos(%pos, %vel, %count) {
+	if (%count > 500) {
+		return "";
+	}
+
+	%nextVel = vectorAdd(%vel, "0 0 " @ ($soccerBallGravityMod * 0.032 * 4));
+	%nextPos = vectorAdd(%pos, vectorAdd(vectorScale(%vel, 0.032 * 4), vectorScale(vectorNormalize(%vel), 0.3)));
+	if (vectorLen(%nextVel) > 200) {
+		%nextVel = vectorScale(vectorNormalize(%nextVel), 200);
+	}
+	//check for bricks hit
+	%ray = containerRaycast(%pos, %nextPos, $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType);
+	if (isObject(getWord(%ray, 0))) {
+		return %ray;
+	}
+
+	%ray = containerRaycast(%pos, vectorAdd(%pos, "0 0 -0.35"), $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType);
+	if (isObject(getWord(%ray, 0))) {
+		return %ray;
+	}
+
+	%nextPos = vectorAdd(%pos, vectorScale(%vel, 0.032 * 4));
+	return soccerRaycastTracerLoop(%nextPos, %nextVel, %count+1);
+}
+
 function clearLines() {
 	while (isObject(SoccerTracers)) {
 		SoccerTracers.deleteAll();
@@ -267,8 +293,8 @@ function clearLines() {
 
 function serverCmdClearLines(%cl) {
 	if (%cl.isSuperAdmin) {
-		clearLines();
 		while (isObject(SoccerTracers)) {
+			SoccerTracers.deleteAll();
 			SoccerTracers.delete();
 		}
 		messageClient(%cl, '', "\c5Lines have been cleared");
@@ -319,3 +345,4 @@ function SimSet::displayTracers(%simSet) {
 
 	%simSet.displayedTracers = %simSet.getCount();
 }
+
