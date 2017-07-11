@@ -100,12 +100,13 @@ function soccerTracerLoop(%proj, %color) {
 ////////////////////
 
 
+$MAXTRACERS = 18;
 function cullGlobalSoccerTracers() {
 	if (!isObject(GlobalSoccerTracerSet)) {
 		return;
 	}
 
-	%max = 8;
+	%max = $MAXTRACERS;
 	if ((%ct = GlobalSoccerTracerSet.getCount()) > %max) {
 		%simSet = GlobalSoccerTracerSet.getObject(%ct - %max - 1);
 		%startSimColor = %simSet.color;
