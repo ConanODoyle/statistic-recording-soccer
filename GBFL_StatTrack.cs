@@ -12,6 +12,30 @@ $STATTRACK::LoopStatTrackData[1] = "HasBall";
 //	typeOfShot
 //	typeOfInterception
 //	isInGoal
+//
+//	serverCmdStatFileName
+//	serverCmdStatFileExport
+//	serverCmdMakeOfficial
+//	serverCmdAttendPlayers
+//	serverCmdStartPlayers
+//	serverCmdSubInPlayers
+//	serverCmdSetPlayerAsGoalie
+//	serverCmdAddExtraMinutes
+//	serverCmdPKGoal
+//	serverCmdPKAttempt
+//	serverCmdPKSave
+//	serverCmdPKGoalAllowed
+//	serverCmdPKGoalieAttempt
+//	serverCmdYellowcard
+//	serverCmdRedcard
+//	serverCmdAwayPOSTime
+//	serverCmdHomePOSTime
+//	serverCmdLive
+//	serverCmdDead
+//	serverCmdSv
+//	serverCmdBl
+//	serverCmdManualStat
+//	serverCmdStatHelp
 
 
 package GBFL_StatTrack {
@@ -74,4 +98,65 @@ function typeOfShot(%proj) {
 
 function isInGoal(%pos) {
 	return 0; //wat is gole?????
+}
+
+
+////////////////////
+
+
+function serverCmdStatFileName(%cl, %a, %b, %c, %d, %e, %f, %g) {
+	%name = stripChars(trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %g), "<>/\\:?*\"|");
+	%oldname = getStat("CurrentFileName");
+	setStat("CurrentFileName", %name);
+	messageClient(%cl, '', "\c6Set the file name to \"\c3" @ %name @ "\c6\"");
+	if (%oldName !$= "") {
+		messageClient(%cl, '', "- \c6Previous name: \"\c3" @ %oldname @ "\c6\"");
+	}
+}
+
+function serverCmdStatFileExport(%cl) {
+	%currname = getStat("CurrentFileName");
+	if (%currname $= "") {
+		messageClient(%cl, '', "The current filename is empty! Set a filename with /statFileName");
+		return;
+	}
+
+	exportSoccerStatFile();
+}
+
+function serverCmdMakeOfficial(%cl, %a, %b, %c, %d) {
+	%name = trim(%a SPC %b SPC %c SPC %d);
+	%cl = findClientbyName(%name);
+	if (!isObject(%cl)) {
+		messageClient(%cl, '', "No client found!");
+		return;
+	} else {
+		%cl.isOfficial = 1;
+		%cl.canSeeTracers = 1;
+		messageClient(%cl, '', "\c6Set \c3" @ %cl.name @ "\c6 as an official");
+	}
+}
+
+//	serverCmdAttendPlayers
+//	serverCmdStartPlayers
+//	serverCmdSubInPlayers
+//	serverCmdSetPlayerAsGoalie
+//	serverCmdAddExtraMinutes
+//	serverCmdPKGoal
+//	serverCmdPKAttempt
+//	serverCmdPKSave
+//	serverCmdPKGoalAllowed
+//	serverCmdPKGoalieAttempt
+//	serverCmdYellowcard
+//	serverCmdRedcard
+//	serverCmdAwayPOSTime
+//	serverCmdHomePOSTime
+//	serverCmdLive
+//	serverCmdDead
+//	serverCmdSv
+//	serverCmdBl
+//	serverCmdManualStat
+
+function serverCmdStatHelp (%cl) {
+	
 }

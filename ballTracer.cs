@@ -24,6 +24,7 @@ datablock StaticShapeData(SoccerBallShape)
 //	soccerGetEndPos
 //	clearLines
 //	serverCmdClearLines
+//	getTracerColor
 //
 //	StaticShape::showToClient
 //	StaticShape::showToAllClients
@@ -50,7 +51,7 @@ package GBFL_SoccerBallTracer {
 			// };
 			// MissionCleanup.add(%ghost);
 			// talk("Created ghost ball...");
-			%proj.tracerColor = %color = getRandom() SPC getRandom() SPC getRandom() @ " 1";
+			%proj.tracerColor = getTracerColor(%proj.client);
 			schedule(10, %proj, initSoccerRaycastTracerLoop, %proj);
 			// startSoccerTracer(%proj, "1 1 1 0.5");
 		}
@@ -101,7 +102,7 @@ function soccerTracerLoop(%proj, %color) {
 ////////////////////
 
 
-$MAXTRACERS = 18;
+$MAXTRACERS = 16;
 function cullGlobalSoccerTracers() {
 	if (!isObject(GlobalSoccerTracerSet)) {
 		return;
@@ -127,6 +128,10 @@ function cullGlobalSoccerTracers() {
 }
 
 function initSoccerRaycastTracerLoop(%proj, %hit, %bounce) {
+	if (!$LiveBall) {
+		return;
+	}
+
 	%simSet = new SimSet(soccerTracers) { 
 		color = %proj.tracerColor; 
 		tracerID = getStat("NumSoccerTracers") + 0;
@@ -286,9 +291,6 @@ function clearLines() {
 		SoccerTracers.deleteAll();
 		SoccerTracers.delete();
 	}
-	while (isObject(ShapeLines)) {
-		ShapeLines.delete();
-	}
 }
 
 function serverCmdClearLines(%cl) {
@@ -300,6 +302,29 @@ function serverCmdClearLines(%cl) {
 		messageClient(%cl, '', "\c5Lines have been cleared");
 	} else {
 		messageClient(%cl, '', "You must be a Super Admin to use this command");
+	}
+}
+
+function getTracerColors(%cl) {
+	%team = getSoccerTeam(%cl);
+	if (%team $= "Away") {
+		%r = getRandom();
+		%gb = getRandom();
+		if (%r > %gb) {
+			return %r SPC %gb SPC %gb SPC "1";
+		} else {
+			return %gb SPC %r SPC %r SPC "1";
+		}
+	} else if (%team $= "Home") {
+		%r = getRandom();
+		%gb = getRandom();
+		if (%r > %gb) {
+			return %gb SPC %gb SPC %r SPC "1";
+		} else {
+			return %r SPC %r SPC %gb SPC "1";
+		}
+	} else {
+		return "1 1 1 1";
 	}
 }
 
@@ -337,7 +362,7 @@ function SimSet::displayTracers(%simSet) {
 	for (%i = %simSet.displayedTracers; %i < %simSet.getCount(); %i++) {
 		%obj = %simSet.getObject(%i);
 		for (%j = 0; %j < ClientGroup.getCount(); %j++) {
-			if ((%cl = ClientGroup.getObject(%j)).isOfficial) {
+			if ((%cl = ClientGroup.getObject(%j)).canSeeTracers) {
 				%obj.scopeToClient(%cl);
 			}
 		}
