@@ -509,7 +509,12 @@ function GameConnection::ScoreGoalHome(%cl) {
 		}
 	}
 
-	if (!isObject($GoalieAway)) {
+	if (isObject(%assistCl)) {
+		%assistCl.setStat("GoalAssist" @ %assistCl.getStat("NumGoalAssists") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
+		%assistCl.incStat("NumGoalAssists", 1);		
+	}
+
+	if (!isObject($GoalieHome)) {
 		messageAdmins("!!! \c6Home Goal scored but no goalie in Away Team!");
 	} else {
 		$GoalieAway.setStat("GoalAllowed" @ $GoalieAway.getStat("NumGoalsAllowed") + 0, %mostRecentTouch TAB %mostRecentTouchCl TAB "Recorded by " @ %cl.bl_id);
@@ -518,7 +523,7 @@ function GameConnection::ScoreGoalHome(%cl) {
 
 	messageOfficialsExcept("\c6Home Goal recorded by \c3" @ %cl.name);
 	messageOfficialsExcept("\c6Scorer: " @ %mostRecentTouchCl.name);
-	messageOfficialsExcept("\c6Assists: " @ %assistList);
+	if (isObject(%assistCl)) { messageOfficialsExcept("\c6Assist: " @ %assistCl); }
 	messageOfficialsExcept("\c6Away Goalie: " @ $GoalieAway.name);
 }
 
@@ -553,14 +558,16 @@ function GameConnection::ScoreGoalAway(%cl) {
 		%time = getWord(%field, 2);
 		if (%time > %enemyTeamLastTouched) {
 			%targ = findClientbyName(getWord(%field, 0));
-			%targ.setStat("GoalAssist" @ %targ.getStat("NumGoalAssists") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
-			%targ.incStat("NumGoalAssists", 1);
-			if (%assistList !$= "") {
-				%assistList = trim(%assistList @ ", " @ %targ.name);
-			} else {
-				%assistList = %targ.name;
+			if (%mostRecentTouch - %targ < 5000 && %time > %mostRecentAssistTouch) {
+				%assistCl = %targ;
+				%mostRecentAssistTouch = %time;
 			}
 		}
+	}
+
+	if (isObject(%assistCl)) {
+		%assistCl.setStat("GoalAssist" @ %assistCl.getStat("NumGoalAssists") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
+		%assistCl.incStat("NumGoalAssists", 1);		
 	}
 
 	if (!isObject($GoalieHome)) {
@@ -570,9 +577,9 @@ function GameConnection::ScoreGoalAway(%cl) {
 		$GoalieAway.incStat("NumGoalsAllowed", 1);
 	}
 
-	messageOfficialsExcept("\c6Home Goal recorded by \c3" @ %cl.name);
+	messageOfficialsExcept("\c6Away Goal recorded by \c3" @ %cl.name);
 	messageOfficialsExcept("\c6Scorer: " @ %mostRecentTouchCl.name);
-	messageOfficialsExcept("\c6Assists: " @ %assistList);
+	if (isObject(%assistCl)) { messageOfficialsExcept("\c6Assist: " @ %assistCl); }
 	messageOfficialsExcept("\c6Away Goalie: " @ $GoalieAway.name);
 }
 

@@ -16,6 +16,8 @@ $STATTRACK::LoopStatTrackData[0] = "Pos";
 //	GameConnection::incStat
 //	appendStat
 //	GameConnection::appendStat
+//	exportAllStats
+//
 //	initLoopStatTrack
 //	loopStatTrack
 //	stopLoopStatTrack
@@ -96,6 +98,15 @@ function GameConnection::appendStat(%cl, %stat, %val) {
 		$StatTrack_CL[%cl.bl_id @ "_" @ %stat] = $StatTrack_CL[%cl.bl_id @ "_" @ %stat] TAB %val;
 	}
 }
+
+function exportAllStats() {
+	//gotta write this shit
+	return;
+}
+
+
+////////////////////
+
 
 function initLoopStatTrack(%interval) {
 	cancel($LoopStatTrackSched);
