@@ -90,7 +90,11 @@ function appendStat(%stat, %val) {
 }
 
 function GameConnection::appendStat(%cl, %stat, %val) {
-	$StatTrack_CL[%cl.bl_id @ "_" @ %stat] = $StatTrack_CL[%cl.bl_id @ "_" @ %stat] TAB %val;
+	if ($StatTrack_CL[%cl.bl_id @ "_" @ %stat] $= "") {
+		$StatTrack_CL[%cl.bl_id @ "_" @ %stat] = %val;
+	} else {
+		$StatTrack_CL[%cl.bl_id @ "_" @ %stat] = $StatTrack_CL[%cl.bl_id @ "_" @ %stat] TAB %val;
+	}
 }
 
 function initLoopStatTrack(%interval) {
