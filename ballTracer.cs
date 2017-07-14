@@ -324,7 +324,8 @@ function getTracerColors(%cl) {
 			return %r SPC %r SPC %gb SPC "1";
 		}
 	} else {
-		return "1 1 1 1";
+		%c = getRandom();
+		return %c SPC %c SPC %c SPC "1";
 	}
 }
 
@@ -362,7 +363,7 @@ function SimSet::displayTracers(%simSet) {
 	for (%i = %simSet.displayedTracers; %i < %simSet.getCount(); %i++) {
 		%obj = %simSet.getObject(%i);
 		for (%j = 0; %j < ClientGroup.getCount(); %j++) {
-			if ((%cl = ClientGroup.getObject(%j)).canSeeTracers) {
+			if ((%cl = ClientGroup.getObject(%j)).canViewTracers) {
 				%obj.scopeToClient(%cl);
 			}
 		}

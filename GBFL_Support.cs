@@ -1,28 +1,26 @@
-RTB_registerPref(%name, %addon, %variable, %params, %filename, %default, %requiresRestart, %hostOnly, %callback) {
+RTB_registerPref("Away Team Name",	"Away Team",	"$StatTrack::AwayTeamName",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 1 Name",	"Away Team",	"$StatTrack::AwayTeamP1",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 2 Name",	"Away Team",	"$StatTrack::AwayTeamP2",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 3 Name",	"Away Team",	"$StatTrack::AwayTeamP3",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 4 Name",	"Away Team",	"$StatTrack::AwayTeamP4",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 5 Name",	"Away Team",	"$StatTrack::AwayTeamP5",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 6 Name",	"Away Team",	"$StatTrack::AwayTeamP6",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 7 Name",	"Away Team",	"$StatTrack::AwayTeamP7",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 8 Name",	"Away Team",	"$StatTrack::AwayTeamP8",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 9 Name",	"Away Team",	"$StatTrack::AwayTeamP9",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 10 Name",	"Away Team",	"$StatTrack::AwayTeamP10",	"str", "GBFL_StatTrack", "", 0, 0, "");
 
-RTB_registerPref("Away Team Name",	"Away Team",	"$AwayTeamName",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 1 Name",	"Away Team",	"$AwayTeamP1",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 2 Name",	"Away Team",	"$AwayTeamP2",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 3 Name",	"Away Team",	"$AwayTeamP3",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 4 Name",	"Away Team",	"$AwayTeamP4",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 5 Name",	"Away Team",	"$AwayTeamP5",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 6 Name",	"Away Team",	"$AwayTeamP6",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 7 Name",	"Away Team",	"$AwayTeamP7",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 8 Name",	"Away Team",	"$AwayTeamP8",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 9 Name",	"Away Team",	"$AwayTeamP9",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 10 Name",	"Away Team",	"$AwayTeamP10",	"str", "GBFL_StatTrack", "", 0, 0, "");
-
-RTB_registerPref("Home Team Name",	"Home Team",	"$HomeTeamName",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 1 Name",	"Home Team",	"$HomeTeamP1",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 2 Name",	"Home Team",	"$HomeTeamP2",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 3 Name",	"Home Team",	"$HomeTeamP3",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 4 Name",	"Home Team",	"$HomeTeamP4",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 5 Name",	"Home Team",	"$HomeTeamP5",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 6 Name",	"Home Team",	"$HomeTeamP6",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 7 Name",	"Home Team",	"$HomeTeamP7",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 8 Name",	"Home Team",	"$HomeTeamP8",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 9 Name",	"Home Team",	"$HomeTeamP9",	"str", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 10 Name",	"Home Team",	"$HomeTeamP10",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Home Team Name",	"Home Team",	"$StatTrack::HomeTeamName",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 1 Name",	"Home Team",	"$StatTrack::HomeTeamP1",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 2 Name",	"Home Team",	"$StatTrack::HomeTeamP2",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 3 Name",	"Home Team",	"$StatTrack::HomeTeamP3",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 4 Name",	"Home Team",	"$StatTrack::HomeTeamP4",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 5 Name",	"Home Team",	"$StatTrack::HomeTeamP5",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 6 Name",	"Home Team",	"$StatTrack::HomeTeamP6",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 7 Name",	"Home Team",	"$StatTrack::HomeTeamP7",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 8 Name",	"Home Team",	"$StatTrack::HomeTeamP8",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 9 Name",	"Home Team",	"$StatTrack::HomeTeamP9",	"str", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 10 Name",	"Home Team",	"$StatTrack::HomeTeamP10",	"str", "GBFL_StatTrack", "", 0, 0, "");
 
 
 function getSoccerTeam(%cl) {

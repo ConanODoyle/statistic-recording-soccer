@@ -60,7 +60,6 @@ activatePackage(Support_StatTrack);
 
 function setStat(%stat, %val) {
 	$StatTrack_[%stat] = %val;
-	exportAllStats();
 }
 
 function GameConnection::setStat(%cl, %stat, %val) {
@@ -100,7 +99,11 @@ function GameConnection::appendStat(%cl, %stat, %val) {
 }
 
 function exportAllStats() {
-	//gotta write this shit
+	if (getStat("CurrentFileName") $= "") {
+		messageAdmins("Attempt to export stats failed: no filename");
+		return;
+	} 
+	export("$StatTrack*", "config/StatTrack/" @ getStat("CurrentFileName") @ ".cs");
 	return;
 }
 

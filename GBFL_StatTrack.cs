@@ -141,10 +141,10 @@ function serverCmdStatFileName(%cl, %a, %b, %c, %d, %e, %f, %g) {
 	}
 
 	%name = stripChars(trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %g), "<>/\\:?*\"|");
-	%oldName = getStat("CurrentFileName");
+	%oldName = getField(getStat("CurrentFileName"), 0);
 	setStat("CurrentFileName", %name TAB "Recorded by " @ %cl.bl_id);
-	messageClient(%cl, '', "\c6Set the file name to \"\c3" @ %name @ "\c6\"");
-	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set the filename to (Filename: \"\c3" @ %name @ "\c6\")", %cl);
+
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set the filename to (Filename: \"\c3" @ %name @ "\c6\")");
 	if (%oldName !$= "") {
 		messageOfficialsExcept("\c6- Previous filename: \"\c3" @ %oldName @ "\c6\"");
 	}
@@ -155,13 +155,13 @@ function serverCmdStatFileExport(%cl) {
 		return;
 	}
 
-	%currName = getStat("CurrentFileName");
+	%currName = getField(getStat("CurrentFileName"), 0);
 	if (%currName $= "") {
 		messageClient(%cl, '', "The current filename is empty! Set a filename with /statFileName");
 		return;
 	}
 
-	exportSoccerStatFile();
+	exportAllStats();
 	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 exported the current stats (Filename: \"\c3" @ %currName @ "\c6\")");
 }
 
@@ -178,7 +178,24 @@ function serverCmdMakeOfficial(%cl, %a, %b, %c, %d) {
 	} else {
 		%targ.isOfficial = 1;
 		%targ.canSeeTracers = 1;
-		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as an official");
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as an Official");
+	}
+}
+
+function serverCmdMakeSuperOfficial(%cl, %a, %b, %c, %d) {
+	if (!%cl.isAdmin && !%cl.isSuperAdmin) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d);
+	%targ = findClientbyName(%name);
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.isOfficial = 1;
+		%targ.canSeeTracers = 1;
+		messageAdmins("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as a Super Official");
 	}
 }
 
@@ -592,7 +609,7 @@ function serverCmdManualStat(%cl, %name, %a, %b, %c, %d, %e, %f, %g, %h, %i, %j,
 	setStat(%name, %val);
 	setStat("SetManualStat" @ getStat("NumTimesSetManualStat") + 0, %name TAB getRealTime() TAB "Recorded by " @ %cl.bl_id);
 	incStat("NumTimesSetManualStat", 1);
-	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 manually set the stat \"" @ %name @ "\" to \c3" %val);
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 manually set the stat \"" @ %name @ "\" to \c3" @ %val);
 }
 
 function serverCmdStatHelp (%cl) {
