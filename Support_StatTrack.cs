@@ -103,7 +103,7 @@ function exportAllStats() {
 		messageAdmins("Attempt to export stats failed: no filename");
 		return;
 	} 
-	export("$StatTrack*", "config/StatTrack/" @ getStat("CurrentFileName") @ ".cs");
+	export("$StatTrack*", "config/StatTrack/" @ getField(getStat("CurrentFileName"), 0) @ ".cs");
 	return;
 }
 
