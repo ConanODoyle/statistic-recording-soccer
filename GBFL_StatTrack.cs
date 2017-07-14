@@ -49,8 +49,39 @@ package GBFL_StatTrack {
 		%cl.setStat("SoccerKick" @ (%cl.getStat("SoccerKickCount") + 0), %cl.name TAB %obj.getTransform() TAB getSimTime());
 		incStat("SoccerKickCount", 1); 
 		%cl.incStat("SoccerKickCount", 1);
+
+		%cl.lastTouchedBallTime = getSimTime();
 	}
 
+	function soccerBallImage::onMount(%db, %obj, %slot) {
+		parent::onMount(%db, %obj, %slot);
+		%obj.pickUpBallTime = getSimTime();
+		%cl.lastTouchedBallTime = getSimTime();
+	}
+
+	function soccerBallStandImage::onMount(%db, %obj, %slot) {
+		parent::onMount(%db, %obj, %slot);
+		%obj.pickUpBallTime = getSimTime();
+		%cl.lastTouchedBallTime = getSimTime();
+	}
+
+	function soccerBallImage::onUnMount(%db, %obj, %slot) {
+		parent::onUnMount(%db, %obj, %slot);
+		if (isObject(%cl = %obj.client) && %obj.pickUpBallTime != 0) {
+			%team = getSoccerTeam(%cl);
+			incStat(%team @ "PossessionTime", mFloor(getSimTime() - %obj.pickUpBallTime) / 100);
+			%cl.lastTouchedBallTime = getSimTime();
+		}
+	}
+
+	function soccerBallStandImage::onUnMount(%db, %obj, %slot) {
+		parent::onUnMount(%db, %obj, %slot);
+		if (isObject(%cl = %obj.client) && %obj.pickUpBallTime != 0) {
+			%team = getSoccerTeam(%cl);
+			incStat(%team @ "PossessionTime", mFloor(getSimTime() - %obj.pickUpBallTime) / 100);
+			%cl.lastTouchedBallTime = getSimTime();
+		}
+	}
 
 };
 activatePackage(GBFL_StatTrack);
@@ -105,57 +136,457 @@ function isInGoal(%pos) {
 
 
 function serverCmdStatFileName(%cl, %a, %b, %c, %d, %e, %f, %g) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
 	%name = stripChars(trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %g), "<>/\\:?*\"|");
-	%oldname = getStat("CurrentFileName");
-	setStat("CurrentFileName", %name);
+	%oldName = getStat("CurrentFileName");
+	setStat("CurrentFileName", %name TAB "Recorded by " @ %cl.bl_id);
 	messageClient(%cl, '', "\c6Set the file name to \"\c3" @ %name @ "\c6\"");
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set the filename to (Filename: \"\c3" @ %name @ "\c6\")", %cl);
 	if (%oldName !$= "") {
-		messageClient(%cl, '', "- \c6Previous name: \"\c3" @ %oldname @ "\c6\"");
+		messageOfficialsExcept("\c6- Previous filename: \"\c3" @ %oldName @ "\c6\"");
 	}
 }
 
 function serverCmdStatFileExport(%cl) {
-	%currname = getStat("CurrentFileName");
-	if (%currname $= "") {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%currName = getStat("CurrentFileName");
+	if (%currName $= "") {
 		messageClient(%cl, '', "The current filename is empty! Set a filename with /statFileName");
 		return;
 	}
 
 	exportSoccerStatFile();
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 exported the current stats (Filename: \"\c3" @ %currName @ "\c6\")");
 }
 
 function serverCmdMakeOfficial(%cl, %a, %b, %c, %d) {
+	if (!%cl.isAdmin && !%cl.isSuperAdmin) {
+		return;
+	}
+
 	%name = trim(%a SPC %b SPC %c SPC %d);
-	%cl = findClientbyName(%name);
-	if (!isObject(%cl)) {
-		messageClient(%cl, '', "No client found!");
+	%targ = findClientbyName(%name);
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
 		return;
 	} else {
-		%cl.isOfficial = 1;
-		%cl.canSeeTracers = 1;
-		messageClient(%cl, '', "\c6Set \c3" @ %cl.name @ "\c6 as an official");
+		%targ.isOfficial = 1;
+		%targ.canSeeTracers = 1;
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as an official");
 	}
 }
 
-//	serverCmdAttendPlayers
-//	serverCmdStartPlayers
-//	serverCmdSubInPlayers
-//	serverCmdSetPlayerAsGoalie
-//	serverCmdAddExtraMinutes
-//	serverCmdPKGoal
-//	serverCmdPKAttempt
-//	serverCmdPKSave
-//	serverCmdPKGoalAllowed
-//	serverCmdPKGoalieAttempt
-//	serverCmdYellowcard
-//	serverCmdRedcard
-//	serverCmdAwayPOSTime
-//	serverCmdHomePOSTime
-//	serverCmdLive
-//	serverCmdDead
+function serverCmdAttendPlayers(%cl, %n1, %n2, %n3, %n4, %n5, %n6, %n7, %n8, %n9, %n10, %n11, %n12, %n13, %n14, %n15) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 is setting attendance data...");
+
+	%i = 0;
+	%currNameList = 0;
+	while (%n[%i] !$= "") {
+		%targ = findClientbyName(%n[%i]);
+		if (!isObject(%targ)) {
+			messageClient(%cl, '', "No client by the name of \"" @ %n[%i] @ "\" found!");
+			%i++;
+			continue;
+		}
+		setStat("Player" @ getStat("PlayerAttendedCount") + 0, %targ.name TAB "Attended" TAB "Recorded by " @ %cl.bl_id);
+		incStat("PlayerAttendedCount", 1);
+		if (strLen(%nameList[%currNameList]) > 100) {
+			%currNameList++;
+		}
+		if (%nameList[%currNameList] !$= "") {
+			%nameList[%currNameList] = %nameList[%currNameList] @ ", " @ %targ.name;
+		} else {
+			%nameList[%currNameList] = %targ.name;
+		}
+		%i++;
+	}
+
+	messageOfficialsExcept("\c6The following players have been set as Attended:");
+	for (%i = 0; %i < %currNameList + 1; %i++) {
+		messageOfficialsExcept("\c6" @ %nameList[%i]);
+	}
+}
+
+function serverCmdStartPlayers(%cl, %n1, %n2, %n3, %n4, %n5, %n6, %n7, %n8, %n9, %n10, %n11, %n12, %n13, %n14, %n15) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 is setting started players data...");
+
+	%i = 0;
+	%currNameList = 0;
+	while (%n[%i] !$= "") {
+		%targ = findClientbyName(%n[%i]);
+		if (!isObject(%targ)) {
+			messageClient(%cl, '', "No client by the name of \"" @ %n[%i] @ "\" found!");
+			%i++;
+			continue;
+		}
+		setStat("Player" @ getStat("PlayerStartedCount") + 0, %targ.name TAB "Started" TAB "Recorded by " @ %cl.bl_id);
+		incStat("PlayerStartedCount", 1);
+		if (strLen(%nameList[%currNameList]) > 100) {
+			%currNameList++;
+		}
+		if (%nameList[%currNameList] !$= "") {
+			%nameList[%currNameList] = %nameList[%currNameList] @ ", " @ %targ.name;
+		} else {
+			%nameList[%currNameList] = %targ.name;
+		}
+		%i++;
+	}
+
+	messageOfficialsExcept("\c6The following players have been set as Started:");
+	for (%i = 0; %i < %currNameList + 1; %i++) {
+		messageOfficialsExcept("\c6" @ %nameList[%i]);
+	}
+}
+
+function serverCmdSubInPlayers(%cl, %n1, %n2, %n3, %n4, %n5, %n6, %n7, %n8, %n9, %n10, %n11, %n12, %n13, %n14, %n15) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 is setting Subbed In data...");
+
+	%i = 0;
+	%currNameList = 0;
+	while (%n[%i] !$= "") {
+		%targ = findClientbyName(%n[%i]);
+		if (!isObject(%targ)) {
+			messageClient(%cl, '', "No client by the name of \"" @ %n[%i] @ "\" found!");
+			%i++;
+			continue;
+		}
+
+		%targ.setStat("SubbedInTime" @ %targ.getStat("NumTimesSubbedIn"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesSubbedIn", 1);
+
+		if (strLen(%nameList[%currNameList]) > 100) {
+			%currNameList++;
+		}
+		if (%nameList[%currNameList] !$= "") {
+			%nameList[%currNameList] = %nameList[%currNameList] @ ", " @ %targ.name;
+		} else {
+			%nameList[%currNameList] = %targ.name;
+		}
+		%i++;
+	}
+
+	messageOfficialsExcept("\c6The following players have been set as SubbedIn:");
+	for (%i = 0; %i < %currNameList + 1; %i++) {
+		messageOfficialsExcept("\c6" @ %nameList[%i]);
+	}
+}
+
+function serverCmdSetPlayerAsGoalie(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("SetAsGoalieTime" @ %targ.getStat("NumTimesSetAsGoalie"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesSetAsGoalie", 1);
+		%team = getSoccerTeam(%targ);
+		$Goalie[%team] = %targ;
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as a goalie");
+	}
+}
+
+function serverCmdAddExtraMinutes(%cl, %time) {
+	if (!isObject(%cl) && !%cl.isOfficial) {
+		return;
+	}
+
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 added " @ getTimeString(%time) @ " extra time to the clock");
+	setStat("AddExtraMinutes" @ getStat("NumTimesAddExtraMinutes"), %time TAB "Recorded by " @ %cl.bl_id);
+	incStat("NumTimesAddExtraMinutes", 1);
+}
+
+function serverCmdPKGoal(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("PKGoalTime" @ %targ.getStat("NumTimesPKGoal"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesPKGoal", 1);
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set PK Goal for \c3" @ %targ.name);
+	}
+}
+
+function serverCmdPKSave(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("PKSaveTime" @ %targ.getStat("NumTimesPKSave"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesPKSave", 1);
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set PK Save for \c3" @ %targ.name);
+	}
+}
+
+function serverCmdPKGoalAllowed(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("PKGoalAllowedTime" @ %targ.getStat("NumTimesPKGoalAllowed"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesPKGoalAllowed", 1);
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set PK GoalAllowed for \c3" @ %targ.name);
+	}
+}
+
+function serverCmdPKGoalieAttempt(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("PKGoalieAttemptTime" @ %targ.getStat("NumTimesPKGoalieAttempt"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesPKGoalieAttempt", 1);
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set PK GoalieAttempt for \c3" @ %targ.name);
+	}
+}
+
+function serverCmdYellowCard(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("YellowCardTime" @ %targ.getStat("NumTimesYellowCard"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesYellowCard", 1);
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 gave a Yellow Card to \c3" @ %targ.name);
+	}
+}
+
+function serverCmdRedCard(%cl, %a, %b, %c, %d, %e) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	%name = trim(%a SPC %b SPC %c SPC %d SPC %e);
+	%targ = findClientbyName(%name);
+
+	if (!isObject(%targ)) {
+		messageClient(%cl, '', "No client by that name found!");
+		return;
+	} else {
+		%targ.setStat("RedCardTime" @ %targ.getStat("NumTimesRedCard"), getRealTime() TAB "Recorded by " @ %cl.bl_id);
+		%targ.incStat("NumTimesRedCard", 1);
+		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 gave a Red Card to \c3" @ %targ.name);
+	}
+}
+
+function serverCmdAwayPOSTime(%cl, %time) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	incStat("AwayPossessionTime", %time);
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 adjusted Away team possession time by \c3" @ %time);
+	echo(%cl.name @ " adjusted Away team possession time by " @ %time);
+}
+
+function serverCmdHomePOSTime(%cl, %time) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	incStat("HomePossessionTime", %time);
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 adjusted Home team possession time by \c3" @ %time);
+	echo(%cl.name @ " adjusted Home team possession time by " @ %time);
+}
+
+function serverCmdLive(%cl, %time) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	$LiveBall = 1;
+	messageOfficialsExcept("\c6 The ball was set to \c2LIVE\c6 by \c3" @ %cl.name);
+}
+
+function serverCmdLive(%cl, %time) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+
+	$LiveBall = 1;
+	messageOfficialsExcept("\c6 The ball was set to \c0DEAD\c6 by \c3" @ %cl.name);
+}
+
 //	serverCmdSv
 //	serverCmdBl
-//	serverCmdManualStat
+
+function GameConnection::ScoreGoalHome(%cl) {
+	//get last touched scoring player to give goal stat
+	//also get list of last touched scoring team players + time to compare to enemy team players
+	for (%i = 1; %i <= 10; %i++) {
+		if (isObject(%cl = findClientbyName($HomeTeamP[%i]))) {
+			%friendlyTeamLastTouched = trim(%friendlyTeamLastTouched TAB %cl.name SPC %cl.player.lastTouchedBallTime);
+			if (%cl.player.lastTouchedBallTime > %mostRecentTouch) {
+				%mostRecentTouch = %cl.player.lastTouchedBallTime;
+				%mostRecentTouchCl = %cl;
+			}
+		}
+	}
+
+	%mostRecentTouchCl.setStat("Goal" @ %mostRecentTouchCl.getStat("NumGoals") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
+	%mostRecentTouchCl.incStat("NumGoals", 1);
+
+	//find out last pre-goal time that enemy players touched the ball
+	for (%i = 1; %i <= 10; %i++) {
+		if (isObject(%cl = findClientbyName($AwayTeamP[%i]))) {
+			if (%cl.player.lastTouchedBallTime > %enemyTeamLastTouched && %cl.player.lastTouchedBallTime < %mostRecentTouch) {
+				%enemyTeamLastTouched = %cl.player.lastTouchedBallTime;
+			}
+		}
+	}
+
+	//find assists
+	for (%i = 0; %i < getFieldCount(%friendlyTeamLastTouched); %i++) {
+		%field = getField(%friendlyTeamLastTouched, %i);
+		%time = getWord(%field, 2);
+		if (%time > %enemyTeamLastTouched) {
+			%targ = findClientbyName(getWord(%field, 0));
+			%targ.setStat("GoalAssist" @ %targ.getStat("NumGoalAssists") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
+			%targ.incStat("NumGoalAssists", 1);
+			if (%assistList !$= "") {
+				%assistList = trim(%assistList @ ", " @ %targ.name);
+			} else {
+				%assistList = %targ.name;
+			}
+		}
+	}
+
+	if (!isObject($GoalieAway)) {
+		messageAdmins("!!! \c6Home Goal scored but no goalie in Away Team!");
+	} else {
+		$GoalieAway.setStat("GoalAllowed" @ $GoalieAway.getStat("NumGoalsAllowed") + 0, %mostRecentTouch TAB %mostRecentTouchCl TAB "Recorded by " @ %cl.bl_id);
+		$GoalieAway.incStat("NumGoalsAllowed", 1);
+	}
+
+	messageOfficialsExcept("\c6Home Goal recorded by \c3" @ %cl.name);
+	messageOfficialsExcept("\c6Scorer: " @ %mostRecentTouchCl.name);
+	messageOfficialsExcept("\c6Assists: " @ %assistList);
+	messageOfficialsExcept("\c6Away Goalie: " @ $GoalieAway.name);
+}
+
+function GameConnection::ScoreGoalAway(%cl) {
+	//get last touched scoring player to give goal stat
+	//also get list of last touched scoring team players + time to compare to enemy team players
+	for (%i = 1; %i <= 10; %i++) {
+		if (isObject(%cl = findClientbyName($AwayTeamP[%i]))) {
+			%friendlyTeamLastTouched = trim(%friendlyTeamLastTouched TAB %cl.name SPC %cl.player.lastTouchedBallTime);
+			if (%cl.player.lastTouchedBallTime > %mostRecentTouch) {
+				%mostRecentTouch = %cl.player.lastTouchedBallTime;
+				%mostRecentTouchCl = %cl;
+			}
+		}
+	}
+
+	%mostRecentTouchCl.setStat("Goal" @ %mostRecentTouchCl.getStat("NumGoals") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
+	%mostRecentTouchCl.incStat("NumGoals", 1);
+
+	//find out last pre-goal time that enemy players touched the ball
+	for (%i = 1; %i <= 10; %i++) {
+		if (isObject(%cl = findClientbyName($HomeTeamP[%i]))) {
+			if (%cl.player.lastTouchedBallTime > %enemyTeamLastTouched && %cl.player.lastTouchedBallTime < %mostRecentTouch) {
+				%enemyTeamLastTouched = %cl.player.lastTouchedBallTime;
+			}
+		}
+	}
+
+	//find assists
+	for (%i = 0; %i < getFieldCount(%friendlyTeamLastTouched); %i++) {
+		%field = getField(%friendlyTeamLastTouched, %i);
+		%time = getWord(%field, 2);
+		if (%time > %enemyTeamLastTouched) {
+			%targ = findClientbyName(getWord(%field, 0));
+			%targ.setStat("GoalAssist" @ %targ.getStat("NumGoalAssists") + 0, %mostRecentTouch TAB "Recorded by " @ %cl.bl_id);
+			%targ.incStat("NumGoalAssists", 1);
+			if (%assistList !$= "") {
+				%assistList = trim(%assistList @ ", " @ %targ.name);
+			} else {
+				%assistList = %targ.name;
+			}
+		}
+	}
+
+	if (!isObject($GoalieHome)) {
+		messageAdmins("!!! \c6Home Goal scored but no goalie in Away Team!");
+	} else {
+		$GoalieAway.setStat("GoalAllowed" @ $GoalieAway.getStat("NumGoalsAllowed") + 0, %mostRecentTouch TAB %mostRecentTouchCl TAB "Recorded by " @ %cl.bl_id);
+		$GoalieAway.incStat("NumGoalsAllowed", 1);
+	}
+
+	messageOfficialsExcept("\c6Home Goal recorded by \c3" @ %cl.name);
+	messageOfficialsExcept("\c6Scorer: " @ %mostRecentTouchCl.name);
+	messageOfficialsExcept("\c6Assists: " @ %assistList);
+	messageOfficialsExcept("\c6Away Goalie: " @ $GoalieAway.name);
+}
+
+function serverCmdManualStat(%cl, %name, %a, %b, %c, %d, %e, %f, %g, %h, %i, %j, %k, %l, %m, %n, %o, %p) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+	%val = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %g SPC %h SPC %i SPC %j SPC %k SPC %l SPC %m SPC %n SPC %o SPC %p);
+
+	setStat(%name, %val);
+	setStat("SetManualStat" @ getStat("NumTimesSetManualStat") + 0, %name TAB getRealTime() TAB "Recorded by " @ %cl.bl_id);
+	incStat("NumTimesSetManualStat", 1);
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 manually set the stat \"" @ %name @ "\" to \c3" %val);
+}
 
 function serverCmdStatHelp (%cl) {
 	

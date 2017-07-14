@@ -82,7 +82,11 @@ function GameConnection::incStat(%cl, %stat, %inc) {
 }
 
 function appendStat(%stat, %val) {
-	$StatTrack_[%stat] = $StatTrack_[%stat] TAB %inc;
+	if ($StatTrack_[%stat] $= "") {
+		$StatTrack_[%stat] = %val;
+	} else {
+		$StatTrack_[%stat] = $StatTrack_[%stat] TAB %val;
+	}
 }
 
 function GameConnection::appendStat(%cl, %stat, %val) {
