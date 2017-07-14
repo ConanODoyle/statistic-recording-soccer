@@ -473,7 +473,7 @@ function serverCmdLive(%cl, %time) {
 	messageOfficialsExcept("\c6 The ball was set to \c2LIVE\c6 by \c3" @ %cl.name);
 }
 
-function serverCmdLive(%cl, %time) {
+function serverCmdDead(%cl, %time) {
 	if (!%cl.isOfficial) {
 		return;
 	}
