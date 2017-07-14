@@ -52,3 +52,27 @@ function messageOfficialsExcept(%msg, %e0, %e1, %e2, %e3, %e4) {
 		}
 	}
 }
+
+function centerprintDebugData(%cl) {
+	%print = "<just:right>\c6";
+	%print = %print @ "Time: " @ getTimeString($Bood::FootballStats::time) @ "<br>\c6";
+	%print = %print @ "Last T. Pl: " @ $lastTouchedClient.name @ " T:" @ getTimeString($Bood::FootballStats::time - $lastTouchedTime) @ "<br>\c6";
+	%print = %print @ "Last T. Home Pl: " @ $lastTouchedHomeClient.name @ " T:" @ getTimeString($Bood::FootballStats::time - $lastTouchedHomeTime) @ "<br>\c6";
+	%print = %print @ "Last T. Away Pl: " @ $lastTouchedAwayClient.name @ " T:" @ getTimeString($Bood::FootballStats::time - $lastTouchedAwayTime) @ "<br>\c6";
+	%cl.centerprint(%print, 5);
+}
+
+function serverCmdStartCenterprintLoop(%cl) {
+	if (!%cl.isOfficial) {
+		return;
+	}
+	cancel(%cl.centerprintLoopSched);
+
+	centerprintDebugData(%cl);
+
+	%cl.centerprintLoopSched = schedule(500, %cl, serverCmdStartCenterprintLoop, %cl);
+}
+
+function serverCmStopCenterprintLoop(%cl){
+	cancel(%cl.centerprintLoopSched);
+}

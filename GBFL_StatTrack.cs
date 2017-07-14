@@ -39,6 +39,13 @@ $STATTRACK::LoopStatTrackData[1] = "HasBall";
 
 
 package GBFL_StatTrack {
+	function soccerBallItem::onBallCollision(%this, %obj, %col) {
+		if (%col.isCrouched()) {
+			$lastTackle = %col.client.name;
+		}
+		parent::onBallCollision(%this, %obj, %slot);
+	}
+
 	function soccerBallImage::onFire(%db, %obj, %slot) {
 		parent::onFire(%db, %obj, %slot);
 		%cl = %obj.client;
@@ -51,6 +58,11 @@ package GBFL_StatTrack {
 		%cl.incStat("SoccerKickCount", 1);
 
 		%cl.lastTouchedBallTime = getSimTime();
+		$lastTouchedTime = $Bood::FootballStats::time;
+		$lastTouchedClient = %cl;
+		%team = getSoccerTeam(%cl);
+		$lastTouched[%team @ "Time"] = $Bood::FootballStats::time;
+		$lastTouched[%team @ "Client"] = %cl;
 	}
 
 	function soccerBallImage::onMount(%db, %obj, %slot) {
@@ -71,6 +83,10 @@ package GBFL_StatTrack {
 			%team = getSoccerTeam(%cl);
 			incStat(%team @ "PossessionTime", mFloor(getSimTime() - %obj.pickUpBallTime) / 100);
 			%cl.lastTouchedBallTime = getSimTime();
+			$lastTouchedTime = $Bood::FootballStats::time;
+			$lastTouchedClient = %cl;
+			$lastTouched[%team @ "Time"] = $Bood::FootballStats::time;
+			$lastTouched[%team @ "Client"] = %cl;
 		}
 	}
 
@@ -80,6 +96,10 @@ package GBFL_StatTrack {
 			%team = getSoccerTeam(%cl);
 			incStat(%team @ "PossessionTime", mFloor(getSimTime() - %obj.pickUpBallTime) / 100);
 			%cl.lastTouchedBallTime = getSimTime();
+			$lastTouchedTime = $Bood::FootballStats::time;
+			$lastTouchedClient = %cl;
+			$lastTouched[%team @ "Time"] = $Bood::FootballStats::time;
+			$lastTouched[%team @ "Client"] = %cl;
 		}
 	}
 
