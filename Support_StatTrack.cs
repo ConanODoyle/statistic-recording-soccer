@@ -104,6 +104,7 @@ function exportAllStats() {
 		return;
 	} 
 	export("$StatTrack*", "config/StatTrack/" @ getField(getStat("CurrentFileName"), 0) @ ".cs");
+	deleteVariables("$StatTrack_*");
 	return;
 }
 
