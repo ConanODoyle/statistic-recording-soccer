@@ -129,7 +129,6 @@ function cullGlobalSoccerTracers() {
 }
 
 function initSoccerRaycastTracerLoop(%proj, %hit, %bounce) {
-
 	%simSet = new SimSet(soccerTracers) { 
 		color = %proj.tracerColor; 
 		tracerID = getStat("NumSoccerTracers") + 0;
@@ -311,25 +310,15 @@ function serverCmdClearLines(%cl) {
 
 function getTracerColor(%cl) {
 	%team = getSoccerTeam(%cl);
+	%c = getRandom(70, 100);
 	if (%team $= "Away") {
-		%r = getRandom();
-		%gb = getRandom();
-		if (%r > %gb) {
-			return %r SPC %gb SPC %gb SPC "1";
-		} else {
-			return %gb SPC %r SPC %r SPC "1";
-		}
+		%gb = getRandom(0, 50);
+		return (%c/100) SPC %gb/100 SPC %gb/100 SPC "1";
 	} else if (%team $= "Home") {
-		%r = getRandom();
 		%gb = getRandom();
-		if (%r > %gb) {
-			return %gb SPC %gb SPC %r SPC "1";
-		} else {
-			return %r SPC %r SPC %gb SPC "1";
-		}
+		return %gb/100 SPC %gb/100 SPC %c/100 SPC "1";
 	} else {
-		%c = getRandom();
-		return %c SPC %c SPC %c SPC "1";
+		return %c/100 SPC %c/100 SPC %c/100 SPC "1";
 	}
 }
 

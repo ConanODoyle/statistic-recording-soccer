@@ -4,7 +4,12 @@ $STATTRACK::LoopStatTrackData[1] = "HasBall";
 
 //Functions:
 //Packaged:
+//	soccerBallItem::onBallCollision
 //	soccerBallImage::onFire
+//	soccerBallImage::onMount
+//	soccerBallStandImage::onMount
+//	soccerBallImage::onUnMount
+//	soccerBallStandImage::onUnMount
 //Created:
 //	GameConnection::getTransformStatData	RECORDING POS/OWNERSHIP
 //	GameConnection::getHasBallStatData		RECORDING POS/OWNERSHIP
@@ -12,6 +17,12 @@ $STATTRACK::LoopStatTrackData[1] = "HasBall";
 //	typeOfShot
 //	typeOfInterception
 //	isInGoal
+//
+//	GameConnection::clockStart
+//	GameConnection::clockStop
+//	getClockTime
+//	updateClockVariable
+//	serverCmdTS
 //
 //	serverCmdStatFileName
 //	serverCmdStatFileExport
@@ -34,6 +45,8 @@ $STATTRACK::LoopStatTrackData[1] = "HasBall";
 //	serverCmdDead
 //	serverCmdSv
 //	serverCmdBl
+//	GameConnection::scoreGoalHome
+//	GameConnection::scoreGoalAway
 //	serverCmdManualStat
 //	serverCmdStatHelp
 
@@ -43,7 +56,7 @@ package GBFL_StatTrack {
 		if (%col.isCrouched()) {
 			$lastTackle = %col.client.name;
 		}
-		parent::onBallCollision(%this, %obj, %slot);
+		parent::onBallCollision(%this, %obj, %col);
 	}
 
 	function soccerBallImage::onFire(%db, %obj, %slot) {
@@ -58,10 +71,10 @@ package GBFL_StatTrack {
 		%cl.incStat("SoccerKickCount", 1);
 
 		%cl.lastTouchedBallTime = getSimTime();
-		$lastTouchedTime = $Bood::FootballStats::time;
+		$lastTouchedTime = $CurrentClockTime;
 		$lastTouchedClient = %cl;
 		%team = getSoccerTeam(%cl);
-		$lastTouched[%team @ "Time"] = $Bood::FootballStats::time;
+		$lastTouched[%team @ "Time"] = $CurrentClockTime;
 		$lastTouched[%team @ "Client"] = %cl;
 	}
 
@@ -83,9 +96,9 @@ package GBFL_StatTrack {
 			%team = getSoccerTeam(%cl);
 			incStat(%team @ "PossessionTime", mFloor(getSimTime() - %obj.pickUpBallTime) / 100);
 			%cl.lastTouchedBallTime = getSimTime();
-			$lastTouchedTime = $Bood::FootballStats::time;
+			$lastTouchedTime = $CurrentClockTime;
 			$lastTouchedClient = %cl;
-			$lastTouched[%team @ "Time"] = $Bood::FootballStats::time;
+			$lastTouched[%team @ "Time"] = $CurrentClockTime;
 			$lastTouched[%team @ "Client"] = %cl;
 		}
 	}
@@ -96,9 +109,9 @@ package GBFL_StatTrack {
 			%team = getSoccerTeam(%cl);
 			incStat(%team @ "PossessionTime", mFloor(getSimTime() - %obj.pickUpBallTime) / 100);
 			%cl.lastTouchedBallTime = getSimTime();
-			$lastTouchedTime = $Bood::FootballStats::time;
+			$lastTouchedTime = $CurrentClockTime;
 			$lastTouchedClient = %cl;
-			$lastTouched[%team @ "Time"] = $Bood::FootballStats::time;
+			$lastTouched[%team @ "Time"] = $CurrentClockTime;
 			$lastTouched[%team @ "Client"] = %cl;
 		}
 	}
@@ -155,6 +168,60 @@ function isInGoal(%pos) {
 ////////////////////
 
 
+registerOutputEvent("GameConnection", "startClock", "", 0);
+registerOutputEvent("GameConnection", "stopClock", "", 0);
+
+function GameConnection::startClock(%cl) {
+	if (!%cl.isOfficial && !%cl.isAdmin) {
+		return;
+	}
+
+	setStat("ClockStartTime", getRealTime() TAB "Recorded by " @ %cl.name);
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 started the clock! Time: \"\c3" @ getTimeString(mFloor(getRealTime() / 1000)) @ "\c6\")");
+	updateClockVariable();
+}
+
+function GameConnection::stopClock(%cl) {
+	if (!%cl.isOfficial && !%cl.isAdmin) {
+		return;
+	}
+
+	setStat("ClockEndTime", getRealTime() TAB "Recorded by " @ %cl.name);
+	messageOfficialsExcept("\c3" @ %cl.name @ "\c6 ended the clock! Time: \"\c3" @ getTimeString(mFloor(getRealTime() / 1000)) @ "\c6\")");
+	updateClockVariable();
+}
+
+function getClockTime() {
+	%time = getField(getStat("ClockStartTime"), 0);
+	if (%time $= "" || %time > getRealTime()) {
+		return 0;
+	} else {
+		return getRealTime() - %time;
+	}
+}
+
+function updateClockVariable() {
+	cancel($updateClockVariableSched);
+
+	%time = getField(getStat("ClockStartTime"), 0);
+	if (%time !$= "") {
+		$CurrentClockTime = mFloor((getRealTime() - %time) / 1000);
+	} else {
+		$CurrentClockTime = 0;
+		return;
+	}
+
+	$updateClockVariableSched = schedule(1000, 0, updateClockVariable);
+}
+
+function serverCmdTS(%cl) {
+	messageClient(%cl, '', "\c6Current time: \c3" @ getTimeString(mFloor(getClockTime() / 1000)));
+}
+
+
+////////////////////
+
+
 function serverCmdStatFileName(%cl, %a, %b, %c, %d, %e, %f, %g) {
 	if (!%cl.isOfficial) {
 		return;
@@ -197,7 +264,7 @@ function serverCmdMakeOfficial(%cl, %a, %b, %c, %d) {
 		return;
 	} else {
 		%targ.isOfficial = 1;
-		%targ.canSeeTracers = 1;
+		%targ.canViewTracers = 1;
 		messageOfficialsExcept("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as an Official");
 	}
 }
@@ -214,7 +281,8 @@ function serverCmdMakeSuperOfficial(%cl, %a, %b, %c, %d) {
 		return;
 	} else {
 		%targ.isOfficial = 1;
-		%targ.canSeeTracers = 1;
+		%targ.isSuperOfficial = 1;
+		%targ.canViewTracers = 1;
 		messageAdmins("\c3" @ %cl.name @ "\c6 set \c3" @ %targ.name @ "\c6 as a Super Official");
 	}
 }
@@ -498,7 +566,7 @@ function serverCmdDead(%cl, %time) {
 		return;
 	}
 
-	$LiveBall = 1;
+	$LiveBall = 0;
 	messageOfficialsExcept("\c6 The ball was set to \c0DEAD\c6 by \c3" @ %cl.name);
 }
 
