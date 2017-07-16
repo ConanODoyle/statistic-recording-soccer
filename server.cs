@@ -3,6 +3,7 @@ exec("./ballTracer.cs");
 exec("./Support_StatTrack.cs");
 exec("./GBFL_StatTrack.cs");
 exec("./GBFL_Support.cs");
+exec("./GBFL_Coin.cs");
 //exec rest later when done
 
 function serverCmdCEval(%cl, %str) {

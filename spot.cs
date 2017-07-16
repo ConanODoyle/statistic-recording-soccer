@@ -1,58 +1,50 @@
-
 function centerprintPingDelta(%cl) {
 	%str = "Ping delta: <br>";
 	for (%i = 1; %i <= 10; %i++) {
-		%str = %str @ "\c6| ";
-		%acl = fcn($StatTrack::AwayTeamP[%i]);
-		%hcl = fcn($StatTrack::HomeTeamP[%i]);
-		if (isObject(%hcl)) {
-			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.getPing() SPC " | ";
-			%acl.lastPing = %acl.getPing();
+		%acl = findclientbyname($StatTrack::AwayTeamP[%i]);
+		%hcl = findclientbyname($StatTrack::HomeTeamP[%i]);
+		if (%namect == 0) {
+			%str = %str @ "\c6 |";
 		}
-		if (isObject(%acl)) {
-			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.getPing() SPC " | ";
+		if (isObject(%hcl) && $StatTrack::HomeTeamP[%i] !$= "") {
+			%str = %str @ getSubStr(%hcl.name, 0, 5) @ "." SPC %hcl.lastPing - %hcl.getPing() SPC " | ";
 			%hcl.lastPing = %hcl.getPing();
+			%namect++;
 		}
-		if (%i % 2 == 0) {
+		if (isObject(%acl) && $StatTrack::AwayTeamP[%i] !$= "") {
+			%str = %str @ getSubStr(%acl.name, 0, 5) @ "." SPC %acl.lastPing - %acl.getPing() SPC " | ";
+			%acl.lastPing = %acl.getPing();
+			%namect++;
+		}
+		if (%namect > 3) {
 			%str = %str SPC "<br>";
+			%namect = 0;
 		}
 	}
 	%cl.centerprint(%str, 5);
 }
 
 function centerprintPing(%cl) {
-	%str = "Ping delta: <br>";
+	%str = "\c2Ping Data: <br>\c6| ";
 	for (%i = 1; %i <= 10; %i++) {
-		if (%i % 2 == 0) {
-			%str = %str @ "\c6| ";
+		%acl = findclientbyname($StatTrack::AwayTeamP[%i]);
+		%hcl = findclientbyname($StatTrack::HomeTeamP[%i]);
+		if (%namect == 0) {
+			%str = %str @ "\c6 |";
 		}
-		%acl = fcn($StatTrack::AwayTeamP[%i]);
-		%hcl = fcn($StatTrack::HomeTeamP[%i]);
-		if (isObject(%hcl)) {
-			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.getPing() SPC " | ";
+		if (isObject(%hcl) && $StatTrack::HomeTeamP[%i] !$= "") {
+			%str = %str @ getSubStr(%hcl.name, 0, 5) @ "." SPC %hcl.getPing() SPC " | ";
+			%namect++;
 		}
-		if (isObject(%acl)) {
-			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.getPing() SPC " | ";
+		if (isObject(%acl) && $StatTrack::AwayTeamP[%i] !$= "") {
+			%str = %str @ getSubStr(%acl.name, 0, 5) @ "." SPC %acl.getPing() SPC " | ";
+			%namect++;
 		}
-		if (%i % 2 == 0) {
+		
+		if (%namect > 3) {
 			%str = %str SPC "<br>";
+			%namect = 0;
 		}
 	}
 	%cl.centerprint(%str, 5);
-}
-
-
-function serverCmdStartcenterprintPing(%cl) {
-	if (!%cl.isAdmin) {
-		return;
-	}
-	cancel(%cl.centerprintPingSchedule);
-
-	centerprintPing(%cl);
-
-	%cl.centerprintPingSchedule = schedule(500, %cl, serverCmdStartcenterprintPing, %cl);
-}
-
-function serverCmdStopcenterprintPing(%cl){
-	cancel(%cl.centerprintPingSchedule);
 }

@@ -1,26 +1,26 @@
-RTB_registerPref("Away Team Name",	"Away Team",	"$StatTrack::AwayTeamName",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 1 Name",	"Away Team",	"$StatTrack::AwayTeamP1",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 2 Name",	"Away Team",	"$StatTrack::AwayTeamP2",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 3 Name",	"Away Team",	"$StatTrack::AwayTeamP3",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 4 Name",	"Away Team",	"$StatTrack::AwayTeamP4",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 5 Name",	"Away Team",	"$StatTrack::AwayTeamP5",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 6 Name",	"Away Team",	"$StatTrack::AwayTeamP6",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 7 Name",	"Away Team",	"$StatTrack::AwayTeamP7",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 8 Name",	"Away Team",	"$StatTrack::AwayTeamP8",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 9 Name",	"Away Team",	"$StatTrack::AwayTeamP9",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 10 Name",	"Away Team",	"$StatTrack::AwayTeamP10",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Away Team Name",	"Away Team",	"$StatTrack::AwayTeamName",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 1 Name",	"Away Team",	"$StatTrack::AwayTeamP1",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 2 Name",	"Away Team",	"$StatTrack::AwayTeamP2",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 3 Name",	"Away Team",	"$StatTrack::AwayTeamP3",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 4 Name",	"Away Team",	"$StatTrack::AwayTeamP4",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 5 Name",	"Away Team",	"$StatTrack::AwayTeamP5",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 6 Name",	"Away Team",	"$StatTrack::AwayTeamP6",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 7 Name",	"Away Team",	"$StatTrack::AwayTeamP7",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 8 Name",	"Away Team",	"$StatTrack::AwayTeamP8",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 9 Name",	"Away Team",	"$StatTrack::AwayTeamP9",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 10 Name",	"Away Team",	"$StatTrack::AwayTeamP10",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 
-RTB_registerPref("Home Team Name",	"Home Team",	"$StatTrack::HomeTeamName",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 1 Name",	"Home Team",	"$StatTrack::HomeTeamP1",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 2 Name",	"Home Team",	"$StatTrack::HomeTeamP2",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 3 Name",	"Home Team",	"$StatTrack::HomeTeamP3",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 4 Name",	"Home Team",	"$StatTrack::HomeTeamP4",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 5 Name",	"Home Team",	"$StatTrack::HomeTeamP5",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 6 Name",	"Home Team",	"$StatTrack::HomeTeamP6",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 7 Name",	"Home Team",	"$StatTrack::HomeTeamP7",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 8 Name",	"Home Team",	"$StatTrack::HomeTeamP8",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 9 Name",	"Home Team",	"$StatTrack::HomeTeamP9",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 10 Name",	"Home Team",	"$StatTrack::HomeTeamP10",	"string 1 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Home Team Name",	"Home Team",	"$StatTrack::HomeTeamName",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 1 Name",	"Home Team",	"$StatTrack::HomeTeamP1",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 2 Name",	"Home Team",	"$StatTrack::HomeTeamP2",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 3 Name",	"Home Team",	"$StatTrack::HomeTeamP3",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 4 Name",	"Home Team",	"$StatTrack::HomeTeamP4",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 5 Name",	"Home Team",	"$StatTrack::HomeTeamP5",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 6 Name",	"Home Team",	"$StatTrack::HomeTeamP6",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 7 Name",	"Home Team",	"$StatTrack::HomeTeamP7",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 8 Name",	"Home Team",	"$StatTrack::HomeTeamP8",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 9 Name",	"Home Team",	"$StatTrack::HomeTeamP9",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Player 10 Name",	"Home Team",	"$StatTrack::HomeTeamP10",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 
 
 package GBFL_DisableUndo {
@@ -83,20 +83,19 @@ function messageOfficialsExcept(%msg, %e0, %e1, %e2, %e3, %e4) {
 	}
 }
 
-
 function centerprintPingDelta(%cl) {
-	%str = "Ping delta: <br>";
+	%str = "Ping delta: <br>\c6";
 	for (%i = 1; %i <= 10; %i++) {
 		%str = %str @ "\c6| ";
-		%acl = fcn($StatTrack::AwayTeamP[%i]);
-		%hcl = fcn($StatTrack::HomeTeamP[%i]);
-		if (isObject(%hcl)) {
-			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.getPing() SPC " | ";
-			%acl.lastPing = %acl.getPing();
-		}
-		if (isObject(%acl)) {
-			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.getPing() SPC " | ";
+		%acl = findclientbyname($StatTrack::AwayTeamP[%i]);
+		%hcl = findclientbyname($StatTrack::HomeTeamP[%i]);
+		if (isObject(%hcl) && $StatTrack::HomeTeamP[%i] !$= "") {
+			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.lastPing - %hcl.getPing() SPC " | ";
 			%hcl.lastPing = %hcl.getPing();
+		}
+		if (isObject(%acl) && $StatTrack::AwayTeamP[%i] !$= "") {
+			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.lastPing - %acl.getPing() SPC " | ";
+			%acl.lastPing = %acl.getPing();
 		}
 		if (%i % 2 == 0) {
 			%str = %str SPC "<br>";
@@ -106,21 +105,21 @@ function centerprintPingDelta(%cl) {
 }
 
 function centerprintPing(%cl) {
-	%str = "Ping delta: <br>";
+	%str = "\c2Ping Data: <br>\c6";
 	for (%i = 1; %i <= 10; %i++) {
 		if (%i % 2 == 0) {
 			%str = %str @ "\c6| ";
 		}
-		%acl = fcn($StatTrack::AwayTeamP[%i]);
-		%hcl = fcn($StatTrack::HomeTeamP[%i]);
-		if (isObject(%hcl)) {
+		%acl = findclientbyname($StatTrack::AwayTeamP[%i]);
+		%hcl = findclientbyname($StatTrack::HomeTeamP[%i]);
+		if (isObject(%hcl) && $StatTrack::HomeTeamP[%i] !$= "") {
 			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.getPing() SPC " | ";
 		}
-		if (isObject(%acl)) {
+		if (isObject(%acl) && $StatTrack::AwayTeamP[%i] !$= "") {
 			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.getPing() SPC " | ";
 		}
 		if (%i % 2 == 0) {
-			%str = %str SPC "<br>";
+			%str = %str SPC "<br>\c6";
 		}
 	}
 	%cl.centerprint(%str, 5);
