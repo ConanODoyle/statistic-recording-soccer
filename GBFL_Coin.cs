@@ -118,8 +118,8 @@ datablock ItemData(GBFLCoinFlipItem : GBFLCoinItem)
 
 datablock ShapeBaseImageData(GBFLCoinImage)
 {
-	rotation = eulerToMatrix("0 -90");
-	offset = "0 2 0";
+	rotation = eulerToMatrix("0 -90 90");
+	offset = "0.8 0.8 0.3";
 	armReadyBoth = 1;
 
 	shapeFile = "./item/coinItem.dts";
