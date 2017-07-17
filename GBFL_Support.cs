@@ -170,3 +170,275 @@ function serverCmdStartCenterprintLoop(%cl) {
 function serverCmStopCenterprintLoop(%cl){
 	cancel(%cl.centerprintLoopSched);
 }
+
+registerOutputEvent("Player", "clearSoccerBalls", "", 0);
+
+function Player::clearSoccerBalls(%pl) {
+	if (strPos(strLwr(%pl.getMountedImage(0).getName()), "soccer") >= 0) {
+		%pl.unmountimage(0);
+	}
+}
+
+
+function serverCmdActivateBrick(%cl, %brickname) {
+	if (!%cl.isAdmin && !%cl.isOfficial) {
+		return;
+	}
+
+	if (!isObject("_"@ %brickname)) {
+		messageClient(%cl, '', "Cannot find brick name \"" @ %brickname @ "\"");
+	} else {
+		%pl = %cl.player;
+		if (isObject(%pl)) {
+			("_" @ %brickname).onActivate(%cl.player, %cl, %pl.getPosition(), %pl.getEyeVector());
+		} else {
+			("_" @ %brickname).onActivate(%cl.player, %cl, "", "");
+		}
+	}
+}
+
+registerOutputEvent("fxDTSBrick", "activateBrick", "", 1);
+function fxDTSBrick::activateBrick(%this, %cl) {
+	if (!%cl.isAdmin && !%cl.isOfficial) {
+		return;
+	}
+
+	%pl = %cl.player;
+	if (isObject(%pl)) {
+		%this.onActivate(%cl.player, %cl, %pl.getPosition(), %pl.getEyeVector());
+	} else {
+		%this.onActivate(%cl.player, %cl, "", "");
+	}
+}
+
+
+function whistleImage::onSound(%this, %obj, %slot)
+{
+	if(isObject(%obj.client))
+	{
+		if($Whistle::ToggleMode == 1 && (%obj.client.isAdmin || %obj.client.isSuperOfficial))
+		{
+			ServerPlay2D(whistleSound);
+
+			if(%obj.client.isDeadBallArmed)
+			{
+				$LiveBall = !$LiveBall;
+				%clName = %obj.client.name;
+				
+				for(%i = 0; %i < ClientGroup.getCount(); %i++)
+				{
+					%cl = ClientGroup.getObject(%i);
+
+					if(%cl.isDeadBallArmed)
+					{
+						// %cl.isDeadBallArmed = false;
+						cancel(%cl.whistleArmedLoopVar);
+						%cl.centerPrint("", 1);
+						if($LiveBall)
+						{
+							%cl.whistleArmType = "\c0DEAD BALL";
+						}
+						else
+						{
+							%cl.whistleArmType = "\c2LIVE BALL";
+						}
+						%cl.whistleBool = true;
+						whistleArmedLoop(%cl);w
+					}
+
+					if(%cl.isOfficial || %cl.isSuperOfficial)
+						%cl.chatMessage("<font:verdana bold:25px>" @ %obj.client.whistleArmType @ " \c6CALLED BY \c5" @ %clName);
+				}
+			}
+
+			if(($Sim::Time - %obj.lastwhistle) > 0.3)
+			{
+				%obj.lastwhistle = $Sim::Time;
+				%obj.playThread(1,"shiftAway");
+				%obj.playThread(0,"plant");
+				
+				%obj.mountImage(whistlePlayImage, 0);
+			}
+		}
+		else if($Whistle::ToggleMode == 2)
+		{
+			ServerPlay2D(whistleSound);
+
+			if(%obj.client.isDeadBallArmed)
+			{
+				$LiveBall = !$LiveBall;
+				%clName = %obj.client.name;
+
+				for(%i = 0; %i < ClientGroup.getCount(); %i++)
+				{
+					%cl = ClientGroup.getObject(%i);
+
+					if(%cl.isDeadBallArmed)
+					{
+						%cl.isDeadBallArmed = false;
+						cancel(%cl.whistleArmedLoopVar);
+						%cl.centerPrint("", 1);
+					}
+
+					if(%cl.isOfficial || %cl.isSuperOfficial)
+						%cl.chatMessage("<font:verdana bold:25px>" @ %obj.client.whistleArmType @ " \c6CALLED BY \c5" @ %clName);
+				}
+			}
+
+			if(($Sim::Time - %obj.lastwhistle) > 0.3)
+			{
+				%obj.lastwhistle = $Sim::Time;
+				%obj.playThread(1,"shiftAway");
+				%obj.playThread(0,"plant");
+				
+				%obj.mountImage(whistlePlayImage, 0);
+			}
+		}
+		else
+		{
+			%obj.client.centerPrint("<font:verdana bold:30px>\c6Whistle is " @ $Whistle::ToggleName[$Whistle::ToggleMode] @ "\c6!", 2);
+		}
+	}
+}
+
+function whistlePlayImage::onFinish(%this, %obj, %slot)
+{
+	%obj.mountImage(whistleImage, 0);
+}
+
+// Added Features - Xenos109 (3766)
+
+// Whistle Toggle
+
+$Whistle::ToggleMode = 1;
+
+$Whistle::ToggleName[1] = "\c0Admin \c6and \c5Super Official";
+$Whistle::ToggleName[2] = "\c2Everyone";
+
+function serverCmdToggleWhistle(%client)
+{
+	if(%client.isAdmin)
+	{
+		if($Whistle::ToggleMode == 1)
+			$Whistle::ToggleMode = 2;
+		else
+			$Whistle::ToggleMode = 1;
+
+		%client.chatMessage("<font:verdana bold:25px>\c6Whistle Permission: " @ $Whistle::ToggleName[$Whistle::ToggleMode]);
+
+		return;
+	}
+}
+
+// Live/Dead Ball Action
+
+if(isPackage(whistlePackage))
+	deActivatePackage(whistlePackage);
+
+package whistlePackage
+{
+	function serverCmdLight(%client)
+	{
+		if(isObject(%player = %client.player))
+		{
+			if(%player.tool[%player.currTool] == NameToId("WhistleItem"))
+			{
+				if(%client.isDeadBallArmed)
+				{
+					%client.isDeadBallArmed = false;
+					cancel(%client.whistleArmedLoopVar);
+					%client.centerPrint("", 1);
+					return;
+				}
+
+				if(%client.isAdmin || %client.isSuperOfficial)
+				{
+					// Arm the Player
+					if($LiveBall)
+					{
+						%client.whistleArmType = "\c0DEAD BALL";
+						%client.isDeadBallArmed = true;
+						%client.whistleBool = true;
+						whistleArmedLoop(%client);
+					}
+					else
+					{
+						%client.whistleArmType = "\c2LIVE BALL";
+						%client.isDeadBallArmed = true;
+						%client.whistleBool = true;
+						whistleArmedLoop(%client);
+					}
+
+					for(%i = 0; %i < ClientGroup.getCount(); %i++)
+					{
+						%cl = ClientGroup.getObject(%i);
+
+						if(%cl.bl_id == %client.bl_id)
+							continue;
+
+						if(%cl.isSuperOfficial )
+							%cl.centerPrint("<font:verdana bold:25px>\c5" @ %client.name @ " \c6HAS ARMED FOR " @ %client.whistleArmType, 2);
+					}
+
+					return;
+				}
+				else
+					return parent::serverCmdLight(%client);
+			}
+			else
+				return parent::serverCmdLight(%client);
+		}
+	}
+};
+
+activatePackage(whistlePackage);
+
+function whistleArmedLoop(%client)
+{
+	if(%client.whistleArmedLoopVar)
+		cancel(%client.whistleArmedLoopVar);
+
+	if(%client.whistleBool)
+		%client.centerPrint("<font:verdana bold:16px>\c6WHISTLE ARMED: " @ %client.whistleArmType @ "\c6!!", 1);
+	else {
+		%client.centerPrint("<font:verdana bold:16px>\c6WHISTLE ARMED: " @ %client.whistleArmType @ "\c6!!", 1);
+	}
+
+	%client.whistleBool = !%client.whistleBool;
+
+	if(%client.isDeadBallArmed)
+		%client.whistleArmedLoopVar = schedule(500, 0, "whistleArmedLoop", %client);
+}
+
+
+
+function serverCmdActivateBrick(%cl, %brickname) {
+	if (!%cl.isAdmin && !%cl.isOfficial) {
+		return;
+	}
+
+	if (!isObject("_"@ %brickname)) {
+		messageClient(%cl, '', "Cannot find brick name \"" @ %brickname @ "\"");
+	} else {
+		%pl = %cl.player;
+		if (isObject(%pl)) {
+			("_" @ %brickname).onActivate(%cl.player, %cl, %pl.getPosition(), %pl.getEyeVector());
+		} else {
+			("_" @ %brickname).onActivate(%cl.player, %cl, "", "");
+		}
+	}
+}
+
+registerOutputEvent("fxDTSBrick", "activateBrick", "", 1);
+function fxDTSBrick::activateBrick(%this, %cl) {
+	if (!%cl.isAdmin && !%cl.isOfficial) {
+		return;
+	}
+
+	%pl = %cl.player;
+	if (isObject(%pl)) {
+		%this.onActivate(%cl.player, %cl, %pl.getPosition(), %pl.getEyeVector());
+	} else {
+		%this.onActivate(%cl.player, %cl, "", "");
+	}
+}

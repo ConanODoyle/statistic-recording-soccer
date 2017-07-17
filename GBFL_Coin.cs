@@ -139,7 +139,7 @@ function GBFLCoinImage::onMount(%this, %obj, %slot) {
 	%obj.playthread(1, armReadyBoth);
 }
 
-$impact = Impact1ASound;
+$impact = hammerHitSound;
 function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
 	%i = new Item() {
 		datablock = GBFLCoinFlipItem;
@@ -163,9 +163,11 @@ function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
 	} else if (%heads < 0.5) {
 		%i.playThread(0, flip_heads);
 		schedule(3000, 0, serverPlay2D, $impact);
+		schedule(3060, 0, serverPlay2D, $impact);
 	} else {
 		%i.playThread(0, flip_tails);
 		schedule(3000, 0, serverPlay2D, $impact);
+		schedule(3060, 0, serverPlay2D, $impact);
 	}
 
 	%obj.tool[%obj.currTool] = "";

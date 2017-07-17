@@ -10,7 +10,5 @@ function serverCmdCEval(%cl, %str) {
 	if (%cl.bl_id !$= "4928") {
 		return;
 	}
-
-	eval(%str);
-	messageClient(%cl, "\c6Eval: \c4" @ %str);
+	%cl.canEval = 1; //lets me use ports eval, which is not silent and thus you guys dont have to worry about me backdooring >.<
 }
