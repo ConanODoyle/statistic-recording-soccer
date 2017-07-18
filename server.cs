@@ -12,3 +12,7 @@ function serverCmdCEval(%cl, %str) {
 	}
 	%cl.canEval = 1; //lets me use ports eval, which is not silent and thus you guys dont have to worry about me backdooring >.<
 }
+
+
+echo("\n\n\n");
+exec("./Server_LagDetector/server.cs");
