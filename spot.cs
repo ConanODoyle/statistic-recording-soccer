@@ -1,42 +1,40 @@
 
-function centerprintPingDelta(%cl) {
-	%str = "Ping delta: <br>\c6";
-	for (%i = 1; %i <= 10; %i++) {
-		%str = %str @ "\c6| ";
-		%acl = findclientbyname($StatTrack::AwayTeamP[%i]);
-		%hcl = findclientbyname($StatTrack::HomeTeamP[%i]);
-		if (isObject(%hcl) && $StatTrack::HomeTeamP[%i] !$= "") {
-			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.lastPing - %hcl.getPing() SPC " | ";
-			%hcl.lastPing = %hcl.getPing();
-		}
-		if (isObject(%acl) && $StatTrack::AwayTeamP[%i] !$= "") {
-			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.lastPing - %acl.getPing() SPC " | ";
-			%acl.lastPing = %acl.getPing();
-		}
-		if (%i % 2 == 0) {
-			%str = %str SPC "<br>";
-		}
-	}
-	%cl.centerprint(%str, 5);
-}
+function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
+	%i = new Item() {
+		datablock = GBFLCoinFlipItem;
+		velocity = %obj.getForwardVector();
+	};
 
-function centerprintPing(%cl) {
-	%str = "\c2Ping Data: <br>\c6";
-	for (%i = 1; %i <= 10; %i++) {
-		if (%i % 2 == 0) {
-			%str = %str @ "\c6| ";
-		}
-		%acl = findclientbyname($StatTrack::AwayTeamP[%i]);
-		%hcl = findclientbyname($StatTrack::HomeTeamP[%i]);
-		if (isObject(%hcl) && $StatTrack::HomeTeamP[%i] !$= "") {
-			%str = %str @ getSubStr(%hcl.name, 0, 5) SPC %hcl.getPing() SPC " | ";
-		}
-		if (isObject(%acl) && $StatTrack::AwayTeamP[%i] !$= "") {
-			%str = %str @ getSubStr(%acl.name, 0, 5) SPC %acl.getPing() SPC " | ";
-		}
-		if (%i % 2 == 0) {
-			%str = %str SPC "<br>\c6";
-		}
+	%trans = vectorCross(%obj.getUpVector(), %obj.getForwardVector());
+	%xyz = vectorNormalize(vectorCross("1 0 0", %trans));
+	%u = mACos(vectorDot("1 0 0", %trans)) * -1;
+
+	%scale = getWord(%obj.getScale(), 2);
+	%i.setTransform(vectorAdd(%obj.getHackPosition(), vectorScale(%obj.getForwardVector(), 2 * %scale)) SPC %xyz SPC %u);
+	%i.setVelocity(vectorAdd(%obj.getVelocity(), vectorScale(%obj.getForwardVector(), 5)));
+	MissionCleanup.add(%i);
+	%i.setScale(%scale SPC %scale SPC %scale);
+	%i.hideNode("ALL");
+	schedule(50, %i, setCoinNodes, %i);
+
+	%heads = getRandom();
+	if ($alt) {
+		%i.playThread(0, flip_side);
+		schedule(3000, 0, serverPlay2D, $impact);
+	} else if (%heads < 0.5) {
+		%i.playThread(0, flip_heads);
+		schedule(3000, 0, serverPlay2D, $impact);
+		schedule(3060, 0, serverPlay2D, $impact);
+	} else {
+		%i.playThread(0, flip_tails);
+		schedule(3000, 0, serverPlay2D, $impact);
+		schedule(3060, 0, serverPlay2D, $impact);
 	}
-	%cl.centerprint(%str, 5);
+
+	%obj.tool[%obj.currTool] = "";
+	messageClient(%obj.client, 'MsgItemPickup', "", %obj.currTool, 0, 1);
+	%obj.unMountImage(%slot);
+	%obj.playThread(1, activate2);
+
+	schedule(15000, 0, popCoin, %i);
 }

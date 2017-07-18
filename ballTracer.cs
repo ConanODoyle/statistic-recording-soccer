@@ -69,6 +69,28 @@ package GBFL_SoccerBallTracer {
 		}
 		return parent::onCollision(%db, %proj, %hit, %scale, %pos, %norm);
 	}
+
+	function soccerBallImage::onMount(%this, %obj, %slot) {
+		if (isObject($lastSoccerTracerSet) && $LiveBall) {
+			%pickupShape = createBoxAt(%proj.getPosition(), "0 0 0 0.5", 1);
+			%pickupShape.setDatablock(SoccerBallShape.getID());
+			%pickupShape.setNodeColor("ALL", "0 1 1 0.5");
+			%pickupShape.setNetFlag(6, 1);
+			if (isObject(%proj.client) && !%bounce) {
+				%pickupShape.setShapeName("GRB: " @ %proj.client.name);
+				%pickupShape.setShapeNameColor("0 1 0");
+			}
+			$lastSoccerTracerSet.add(%pickupShape);
+		}
+		return parent::onMount(%this, %obj, %slot);
+	}
+
+	function soccerBallStandImage::onMount(%this, %obj, %slot) {
+		if (isObject($lastSoccerTracerSet) && $LiveBall) {
+
+		}
+		return parent::onMount(%this, %obj, %slot);
+	}
 };
 activatePackage(GBFL_SoccerBallTracer);
 
@@ -137,6 +159,7 @@ function initSoccerRaycastTracerLoop(%proj, %hit, %bounce) {
 	};
 	incStat("NumSoccerTracers", 1);
 	GlobalSoccerTracerSet.add(%simSet);
+	$lastSoccerTracerSet = %simset;
 	cullGlobalSoccerTracers();
 
 
@@ -172,8 +195,8 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 		return;
 	}
 
-	%nextVel = vectorAdd(%vel, "0 0 " @ ($soccerBallGravityMod * 0.032));
-	%nextPos = vectorAdd(%pos, vectorAdd(vectorScale(%vel, 0.032), vectorScale(vectorNormalize(%vel), 0.3)));
+	%nextVel = vectorAdd(%vel, "0 0 " @ ($soccerBallGravityMod * 0.064));
+	%nextPos = vectorAdd(%pos, vectorAdd(vectorScale(%vel, 0.064), vectorScale(vectorNormalize(%vel), 0.3)));
 	if (vectorLen(%nextVel) > 200) {
 		%nextVel = vectorScale(vectorNormalize(%nextVel), 200);
 	}
@@ -249,7 +272,7 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 		// talk(%simSet);
 		return;
 	} else {
-		%nextPos = vectorAdd(%pos, vectorScale(%vel, 0.032));
+		%nextPos = vectorAdd(%pos, vectorScale(%vel, 0.064));
 		%line = drawLine(%pos, %nextPos, %color, 0.05);
 		%line.setNetFlag(6, 1);
 	}

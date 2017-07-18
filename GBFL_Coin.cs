@@ -150,9 +150,11 @@ function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
 	%xyz = vectorNormalize(vectorCross("1 0 0", %trans));
 	%u = mACos(vectorDot("1 0 0", %trans)) * -1;
 
+	%scale = getWord(%obj.getScale(), 2);
 	%i.setTransform(vectorAdd(%obj.getHackPosition(), vectorScale(%obj.getForwardVector(), 2)) SPC %xyz SPC %u);
 	%i.setVelocity(vectorAdd(%obj.getVelocity(), vectorScale(%obj.getForwardVector(), 5)));
 	MissionCleanup.add(%i);
+	%i.setScale(%scale SPC %scale SPC %scale);
 	%i.hideNode("ALL");
 	schedule(50, %i, setCoinNodes, %i);
 
