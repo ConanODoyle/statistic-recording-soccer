@@ -309,7 +309,7 @@ function soccerGetEndPos(%pos, %vel, %count) {
 	}
 
 	%nextPos = vectorAdd(%pos, vectorScale(%vel, 0.032 * 4));
-	return soccerRaycastTracerLoop(%nextPos, %nextVel, %count+1);
+	return soccerGetEndPos(%nextPos, %nextVel, %count+1);
 }
 
 function clearLines() {

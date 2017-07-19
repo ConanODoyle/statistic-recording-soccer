@@ -98,6 +98,40 @@ function GameConnection::appendStat(%cl, %stat, %val) {
 	}
 }
 
+function GameConnection::savePlayerDataToStat(%cl, %stat) {
+	if (!isObject(%pl = %cl.player)) {
+		%cl.setStat(%stat, "DEAD");
+	} else {
+		%t = %pl.getTransform();
+		%scale = %pl.getScale();
+		%eye = %pl.getEyeVector();
+		%vel = %pl.getVelocity();
+
+		for (%i = 0; %i < %pl.getDatablock().maxTools; %i++) {
+			%item[%i] = %pl.tool[%i].getName();
+		}
+		%maxItems = %pl.getDatablock().maxTools;
+
+		for (%i = 0; %i < 4; %i++) {
+			%img[%i] = %pl.getMountedImage(%i).getName();
+		}
+
+		%dmg = %pl.getDamageLevel();
+		%datablock = %pl.getDatablock().getName();
+
+		%result = %t TAB %scale TAB %eye TAB %vel TAB %maxItems;
+		for (%i = 0; %i < %pl.getDatablock().maxTools; %i++) {
+			%result = %result TAB %item[%i];
+		}
+
+		for (%i = 0; %i < 4; %i++) {
+			%result = %result TAB img[%i];
+		}
+		%result TAB %damage TAB %datablock;
+		%cl.setStat(%stat, %result);
+	}
+}
+
 function exportAllStats() {
 	if (getStat("CurrentFileName") $= "") {
 		messageAdmins("Attempt to export stats failed: no filename");
