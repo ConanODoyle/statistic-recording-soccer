@@ -243,7 +243,7 @@ function whistleImage::onSound(%this, %obj, %slot)
 							%cl.whistleArmType = "\c2LIVE BALL";
 						}
 						%cl.whistleBool = true;
-						whistleArmedLoop(%cl);w
+						whistleArmedLoop(%cl);
 					}
 
 					if(%cl.isOfficial || %cl.isSuperOfficial)

@@ -125,9 +125,9 @@ function GameConnection::savePlayerDataToStat(%cl, %stat) {
 		}
 
 		for (%i = 0; %i < 4; %i++) {
-			%result = %result TAB img[%i];
+			%result = %result TAB %img[%i];
 		}
-		%result TAB %damage TAB %datablock;
+		$result = %result TAB %damage TAB %datablock;
 		%cl.setStat(%stat, %result);
 	}
 }
