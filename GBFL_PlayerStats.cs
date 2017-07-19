@@ -62,7 +62,7 @@ package GBFL_PlayerStats {
 		%cl = %obj.client;
 		%currTime = getSimTime();
 		if (%cl.lastPossessedBall !$= "") { %cl.incStat("TimePossessedBall", %currTime - $cl.lastPossessedBall); }
-		if (%obj.lastPositionWithBall !$= "") { %cl.incStat("DistanceRunWithBall", vectorDist(%obj.getPosition(), %obj.lastPositionWithBall); }
+		if (%obj.lastPositionWithBall !$= "") { %cl.incStat("DistanceRunWithBall", vectorDist(%obj.getPosition(), %obj.lastPositionWithBall)); }
 
 		%obj.lastPositionWithBall = "";
 		%cl.lastPossessedBall = "";
@@ -77,7 +77,7 @@ package GBFL_PlayerStats {
 		%cl = %obj.client;
 		%currTime = getSimTime();
 		if (%cl.lastPossessedBall !$= "") { %cl.incStat("TimePossessedBall", %currTime - $cl.lastPossessedBall); }
-		if (%obj.lastPositionWithBall !$= "") { %cl.incStat("DistanceRunWithBall", vectorDist(%obj.getPosition(), %obj.lastPositionWithBall); }
+		if (%obj.lastPositionWithBall !$= "") { %cl.incStat("DistanceRunWithBall", vectorDist(%obj.getPosition(), %obj.lastPositionWithBall)); }
 
 		%obj.lastPositionWithBall = "";
 		%cl.lastPossessedBall = "";
@@ -89,7 +89,7 @@ package GBFL_PlayerStats {
 				%cl = ClientGroup.getObject(%i);
 				if (%cl.lastPossessedBall !$= "" && getSoccerTeam(%cl) !$= "Spectator") {
 					if (%cl.player.lastPositionWithBall !$= "") { 
-						%cl.incStat("DistanceRunWithBall", vectorDist(%cl.player.getPosition(), %cl.player.lastPositionWithBall); 
+						%cl.incStat("DistanceRunWithBall", vectorDist(%cl.player.getPosition(), %cl.player.lastPositionWithBall)); 
 					}
 
 					%cl.player.lastPositionWithBall = %cl.player.getPosition();
