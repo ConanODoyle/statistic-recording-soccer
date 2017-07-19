@@ -1,9 +1,9 @@
 // = Lag Detector =
 
-if($LagDetector::Version >= 1)
+if($LagDetector::Version >= 2)
   return;
 
-$LagDetector::Version = 1;
+$LagDetector::Version = 2;
 
 if(isFile("./prefs.cs"))
   exec("./prefs.cs");
@@ -19,6 +19,11 @@ function LagDetector_tick() {
     %pl = %cl.player;
     %team = %cl.slyrTeam;
     %ping = %cl.getPing();
+
+    %cl.lastPing  = %cl._cachePing;
+    %cl._cachePing = %ping;
+
+    if(%ping $= 0) continue;
 
     if(!isObject(%team) || !isObject(%pl)) continue;
 
@@ -36,9 +41,9 @@ function LagDetector_tick() {
         %pl.setShapeName("[" @ %mode @ "] " @ %cl.netname @ " [" @ %mode @ "]", $funcPass);
 
         if(%mode $= "LAG")
-          %pl.setShapeNameColor("1 0 0 1");
+          %pl.setShapeNameColor("1 0.4745 0 1"); //255, 121, 0
         else
-          %pl.setShapeNameColor("1 0.9 0 1");
+          %pl.setShapeNameColor("1 0.8 0 1"); //255 204 0
 
 
         if(isEventPending(%cl._clearLagDetector))
@@ -48,10 +53,8 @@ function LagDetector_tick() {
         %cl._clearLagDetector = %cl.schedule($LagDetector::Lock, normalizeShapename);
       }
     }
-
-    %cl.lastPing = %ping;
   }
-
+  LagDetectorOverlayTick();
   $LagDetector::Tick = schedule($LagDetector::TickRate, 0, LagDetector_tick);
 }
 
@@ -156,6 +159,8 @@ function serverCmdLagDetector(%client) {
 }
 
 function serverCmdLagDetectorAll(%client) {
+  if(!%client.isAdmin) return;
+
   if(!isObject(LagDetectorSet))
     new SimSet(LagDetectorSet);
 
@@ -163,3 +168,98 @@ function serverCmdLagDetectorAll(%client) {
     LagDetectorSet.add(ClientGroup.getObject(%i));
   }
 }
+
+function serverCmdLagDetectorPlayers(%client) {
+  %added = 0;
+  for(%i = 0; %i < 10; %i++) {
+    %p = $StatTrack::HomeTeamP[%i+1];
+    if(%p !$= "") {
+      %cl = findClientByName(%p);
+      if(isObject(%cl) && %cl.netname $= %p) {
+        %added++;
+        LagDetectorSet.add(%cl);
+      }
+    }
+
+    %p = $StatTrack::AwayTeamP[%i+1];
+    if(%p !$= "") {
+      %cl = findClientByName(%p);
+      if(isObject(%cl) && %cl.netname $= %p) {
+        %added++;
+        LagDetectorSet.add(%cl);
+      }
+    }
+  }
+
+  messageClient(%client, '', "\c4Added " @ %added @ " players");
+}
+
+function serverCmdLagDetectorOverlay(%client) {
+  if(LagDetectorViewers.isMember(%client))
+    LagDetectorViewers.remove(%client);
+  else
+    LagDetectorViewers.add(%client);
+
+  commandToClient(%client, 'centerprint', "");
+}
+
+function LagDetectorOverlayTick() {
+  //0   -> 75  -> 100
+  //150 -> 225 -> 250
+  //300 -> 375 -> 400
+  %msg = "<tab:100,150,250,300,400><color:ffffff><just:left>";
+  %ct = 0;
+  %color = "";
+  for(%i = 0; %i < LagDetectorSet.getCount(); %i++) {
+    %cl = LagDetectorSet.getObject(%i);
+
+    //%team = %cl.slyrTeam;
+    //if(isObject(%team)) {
+    //  %color = "<color:" @ %team.colorHEX @ ">";
+    //} else {
+    //  %color = "<color:ffff00>";
+    //}
+    %line = %color @ getSubStr(%cl.netname, 0, 7);
+    %line = %line TAB " | ";
+
+    //if(%cl._cachePing > $LagDetector::Min) {
+    //  %color = "<color:ff0000>";
+    //} else {
+    //  %color = "<color:006600>";
+    //}
+
+    %line = %line @ %color @ %cl._cachePing;
+    //%line = %line TAB " | ";
+
+    //%delta = (%cl._cachePing-%cl.lastPing);
+
+    //if(mabs(%cl._cachePing) > $LagDetector::Delta) {
+    //  %color = "<color:ff0000>";
+    //} else {
+    //  %color = "<color:006600>";
+    //}
+
+    //%line = %line @ %color @ %delta;
+
+    if((%ct%3) == 0) {
+      if(%first)
+        %msg = %msg @ "<br>" @ %line;
+      else {
+        %msg = %msg @ %line;
+        %first = true;
+      }
+    } else {
+      %msg = %msg TAB %line;
+    }
+
+    %ct++;
+  }
+
+  for(%i = 0; %i < LagDetectorViewers.getCount(); %i++) {
+    %cl = LagDetectorViewers.getObject(%i);
+    commandToClient(%cl, 'centerprint', %msg, 2);
+  }
+}
+
+if(!isObject(LagDetectorViewers))
+  new SimSet(LagDetectorViewers);
