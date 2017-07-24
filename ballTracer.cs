@@ -9,6 +9,8 @@ datablock StaticShapeData(SoccerBallShape)
     //base scale of shape is .2 .2 .2
 };
 
+$tracerGenerationSpeed = 0.096;
+
 
 //Functions:
 //Packaged:
@@ -195,8 +197,8 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 		return;
 	}
 
-	%nextVel = vectorAdd(%vel, "0 0 " @ ($soccerBallGravityMod * 0.064));
-	%nextPos = vectorAdd(%pos, vectorAdd(vectorScale(%vel, 0.064), vectorScale(vectorNormalize(%vel), 0.3)));
+	%nextVel = vectorAdd(%vel, "0 0 " @ ($soccerBallGravityMod * $tracerGenerationSpeed));
+	%nextPos = vectorAdd(%pos, vectorAdd(vectorScale(%vel, $tracerGenerationSpeed), vectorScale(vectorNormalize(%vel), 0.3)));
 	if (vectorLen(%nextVel) > 200) {
 		%nextVel = vectorScale(vectorNormalize(%nextVel), 200);
 	}
@@ -272,7 +274,7 @@ function soccerRaycastTracerLoop(%pos, %vel, %color, %ignore, %count, %simSet) {
 		// talk(%simSet);
 		return;
 	} else {
-		%nextPos = vectorAdd(%pos, vectorScale(%vel, 0.064));
+		%nextPos = vectorAdd(%pos, vectorScale(%vel, $tracerGenerationSpeed));
 		%line = drawLine(%pos, %nextPos, %color, 0.05);
 		%line.setNetFlag(6, 1);
 	}

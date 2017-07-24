@@ -1,5 +1,5 @@
 RTB_registerPref("Away Team Name",	"Away Team",	"$StatTrack::AwayTeamName",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 1 Name",	"Away Team",	"$StatTrack::AwayTeamP1",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Captain Name",	"Away Team",	"$StatTrack::AwayTeamP1",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 RTB_registerPref("Player 2 Name",	"Away Team",	"$StatTrack::AwayTeamP2",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 RTB_registerPref("Player 3 Name",	"Away Team",	"$StatTrack::AwayTeamP3",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 RTB_registerPref("Player 4 Name",	"Away Team",	"$StatTrack::AwayTeamP4",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
@@ -11,7 +11,7 @@ RTB_registerPref("Player 9 Name",	"Away Team",	"$StatTrack::AwayTeamP9",	"string
 RTB_registerPref("Player 10 Name",	"Away Team",	"$StatTrack::AwayTeamP10",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 
 RTB_registerPref("Home Team Name",	"Home Team",	"$StatTrack::HomeTeamName",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
-RTB_registerPref("Player 1 Name",	"Home Team",	"$StatTrack::HomeTeamP1",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
+RTB_registerPref("Captain Name",	"Home Team",	"$StatTrack::HomeTeamP1",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 RTB_registerPref("Player 2 Name",	"Home Team",	"$StatTrack::HomeTeamP2",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 RTB_registerPref("Player 3 Name",	"Home Team",	"$StatTrack::HomeTeamP3",	"string 100", "GBFL_StatTrack", "", 0, 0, "");
 RTB_registerPref("Player 4 Name",	"Home Team",	"$StatTrack::HomeTeamP4",	"string 100", "GBFL_StatTrack", "", 0, 0, "");

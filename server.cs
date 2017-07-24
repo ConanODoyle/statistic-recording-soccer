@@ -6,6 +6,7 @@ exec("./GBFL_Support.cs");
 exec("./GBFL_PlayerStats.cs");
 exec("./Server_LagDetector/server.cs");
 exec("./GBFL_Coin.cs");
+exec("./GBFL_ChallengeFlag.cs");
 //exec rest later when done
 
 function serverCmdCEval(%cl, %str) {
@@ -14,7 +15,3 @@ function serverCmdCEval(%cl, %str) {
 	}
 	%cl.canEval = 1; //lets me use ports eval, which is not silent and thus you guys dont have to worry about me backdooring >.<
 }
-
-
-echo("\n\n\n");
-exec("./Server_LagDetector/server.cs");
