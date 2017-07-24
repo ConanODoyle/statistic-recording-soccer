@@ -60,11 +60,11 @@ function serverCmdChallenge(%cl) {
 	%p.explode();
 
 	if (%cl.name $= $StatTrack::AwayTeamP1) {
-		%item.schedule(10, setNodeColor, "ALL", "0 0 1 1");
+		%item.schedule(50, setNodeColor, "ALL", "0 0 1 1");
 		%team = "Away";
 		%teamColor = "\c1";
 	} else {
-		%item.schedule(10, setNodeColor, "ALL", "1 0 0 1");
+		%item.schedule(50, setNodeColor, "ALL", "1 0 0 1");
 		%team = "Home";
 		%teamColor = "\c0";
 	}
