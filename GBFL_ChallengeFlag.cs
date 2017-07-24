@@ -90,6 +90,10 @@ function serverCmdChallenge(%cl) {
 	}
 }
 
+function serverCmdChal(%cl) {
+	serverCmdChallenge(%cl);
+}
+
 function clearGBFLFlag(%item) {
 	%p = new Projectile() {
 		datablock = spawnProjectile;

@@ -336,10 +336,10 @@ function serverCmdClearLines(%cl) {
 function getTracerColor(%cl) {
 	%team = getSoccerTeam(%cl);
 	%c = getRandom(70, 100);
-	if (%team $= "Away") {
+	if (%team $= "Home") {
 		%gb = getRandom(0, 50);
 		return (%c/100) SPC %gb/100 SPC %gb/100 SPC "1";
-	} else if (%team $= "Home") {
+	} else if (%team $= "Away") {
 		%gb = getRandom();
 		return %gb/100 SPC %gb/100 SPC %c/100 SPC "1";
 	} else {
