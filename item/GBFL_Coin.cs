@@ -1,6 +1,9 @@
-package GBFL_CoinFlipItem {
-	function Armor::onCollision(%this, %obj, %col, %vel, %speed) {
-		if (%col.getDatablock().getID() == GBFLCoinFlipItem.getID()) {
+package GBFL_CoinFlipItem 
+{
+	function Armor::onCollision(%this, %obj, %col, %vel, %speed) 
+	{
+		if (%col.getDatablock().getID() == GBFLCoinFlipItem.getID()) 
+		{
 			return;
 		}
 		return parent::onCollision(%this, %obj, %col, %vel, %speed);
@@ -90,7 +93,7 @@ datablock ItemData(GBFLCoinItem)
 	category = "Weapon";  // Mission editor category
 	className = "Weapon"; // For inventory system
 
-	shapeFile = "./item/coinItem.dts";
+	shapeFile = "./coinItem.dts";
 	// Basic Item Properties
 	mass = 1;
 	density = 0.2;
@@ -122,7 +125,7 @@ datablock ShapeBaseImageData(GBFLCoinImage)
 	offset = "0.8 0.8 0.3";
 	armReadyBoth = 1;
 
-	shapeFile = "./item/coinItem.dts";
+	shapeFile = "./coinItem.dts";
 	stateName[0]			= "Activate";
 	stateTimeoutValue[0]		= 0.5;
 	stateTransitionOnTimeout[0]	= "Ready";
@@ -135,13 +138,16 @@ datablock ShapeBaseImageData(GBFLCoinImage)
 	stateScript[2]			= "onDropCoin";
 };
 
-function GBFLCoinImage::onMount(%this, %obj, %slot) {
+function GBFLCoinImage::onMount(%this, %obj, %slot)
+{
 	%obj.playthread(1, armReadyBoth);
 }
 
 $impact = hammerHitSound;
-function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
-	%i = new Item() {
+function GBFLCoinImage::onDropCoin(%this, %obj, %slot)
+{
+	%i = new Item()
+	{
 		datablock = GBFLCoinFlipItem;
 		velocity = %obj.getForwardVector();
 	};
@@ -159,10 +165,12 @@ function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
 	schedule(50, %i, setCoinNodes, %i);
 
 	%heads = getRandom();
-	if ($alt) {
+	if ($alt)
+	{
 		%i.playThread(0, flip_side);
 		schedule(3000, 0, serverPlay2D, $impact);
-	} else if (%heads < 0.5) {
+	} else if (%heads < 0.5)
+	{
 		%i.playThread(0, flip_heads);
 		schedule(3000, 0, serverPlay2D, $impact);
 		schedule(3060, 0, serverPlay2D, $impact);
@@ -180,8 +188,10 @@ function GBFLCoinImage::onDropCoin(%this, %obj, %slot) {
 	schedule(15000, 0, popCoin, %i);
 }
 
-function popCoin(%i) {
-	%p = new Projectile() {
+function popCoin(%i)
+{
+	%p = new Projectile()
+	{
 		datablock = spawnProjectile;
 		initialPosition = %i.getPosition();
 	};
@@ -190,8 +200,10 @@ function popCoin(%i) {
 	%i.delete();
 }
 
-function setCoinNodes(%i) {
-	if ($alt) {
+function setCoinNodes(%i)
+{
+	if ($alt)
+	{
 		setCoinNode(%i);
 		return;
 	}
@@ -219,7 +231,8 @@ function setCoinNodes(%i) {
 	%i.setNodeColor("gbflW", %white);
 }
 
-function setCoinNode(%i) {
+function setCoinNode(%i)
+{
 	serverPlay2D(BlankABallFiresound);
 	%i.hideNode("ALL");
 	%i.unHideNode("coinG");
@@ -247,13 +260,16 @@ function setCoinNode(%i) {
 	schedule(5000, %i, colorLoop, %i);
 }
 
-function colorLoop(%i) {
+function colorLoop(%i)
+{
 	cancel (%i.colorLoop);
 	%dC = %i.darkColor;
 	%wC = %i.whiteColor;
-	if (%dc !$= "0 0 0 1") {
+	if (%dc !$= "0 0 0 1")
+	{
 		%a = getWord(%dc, 0) / 1.1;
-		if (%a < 0.05) {
+		if (%a < 0.05)
+		{
 			%a = 0;
 		}
 		%i.darkColor = %a SPC %a SPC %a SPC 1;
@@ -261,9 +277,11 @@ function colorLoop(%i) {
 		%ct++;
 	}
 
-	if (%wc !$= "1 1 1 1") {
+	if (%wc !$= "1 1 1 1")
+	{
 		%a = (1 - getWord(%wc, 0)) / 1.1;
-		if (%a < 0.05) {
+		if (%a < 0.05)
+		{
 			%a = 0;
 		}
 		%a = 1 - %a;
@@ -272,7 +290,8 @@ function colorLoop(%i) {
 		%ct++;
 	}
 
-	if (%ct $= "") {
+	if (%ct $= "")
+	{
 		return;
 	}
 	%i.colorLoop = schedule(100, %i, colorLoop, %i);
