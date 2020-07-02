@@ -114,7 +114,7 @@ datablock ItemData(GBFLCoinItem)
 
 datablock ItemData(GBFLCoinFlipItem : GBFLCoinItem)
 {
-	shapeFile = "./coin.dts";
+	shapeFile = "./noTextures/coin.dts";
 	uiname = "";
 	doColorShift = false;
 };
