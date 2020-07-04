@@ -6,14 +6,22 @@ function initializeTable(%name)
 	echo("Table \"" @ %name @ "\" initialized");
 }
 
-function exportTableAsCSV(%name)
+function exportTableAsCSV(%name, %skipAppendTime)
 {
 	%name = getValidTableName(%name);
 	%count = $Table_[%name, "count"];
 
 	%file = new FileObject();
-	%time = getRealTime();
-	%file.openForWrite("config/server/tableCSV/" @ %name @ "_at_" @ %time @ ".csv");
+	if (%skipAppendTime)
+	{
+		%fileName = %name;
+	}
+	else
+	{
+		%fileName = %name @ " at " @ getRealTime();
+	}
+
+	%file.openForWrite("config/server/tableCSV/" @ %fileName @ ".csv");
 
 	echo("Exporting Table \"" @ %name @ "\" as csv with name \"" @ %name @ "_at_" @ %time @ ".csv\"");
 
@@ -27,7 +35,7 @@ function exportTableAsCSV(%name)
 
 function addTableRow(%name, %a, %b, %c, %d, %e, %f, %g, %h, %i, %j, %k, %l, %m, %n)
 {
-	%name = getValidTableName(%name);
+	// %name = getValidTableName(%name);
 	%count = $Table_[%name, "count"];
 
 	%data = %a TAB %b TAB %c TAB %d TAB %e TAB %f TAB %g TAB %h TAB %i TAB %j TAB %k TAB %l TAB %m TAB %n;
