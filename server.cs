@@ -19,6 +19,11 @@
 
 exec("./lib/Support_ShapeLinesV2/server.cs");
 exec("./lib/Script_CSVTables.cs");
+exec("./lib/Script_FileDownload.cs");
+
+exec("./lib/Server_LagDetector/server.cs");
 
 exec("./src/ballTracing.cs");
 exec("./src/tracking.cs");
+exec("./src/teams.cs");
+exec("./src/utils.cs");

@@ -3,6 +3,12 @@ $minTracerDist = 1;
 $dotted = 0;
 $hitPlayer = 0;
 
+datablock StaticShapeData(SoccerBallShape)
+{
+    shapeFile = "Add-Ons/Item_Sports/soccerBall.dts";
+    //base scale of shape is .2 .2 .2
+};
+
 package NewTracers {
 	function Projectile::onAdd(%proj) {
 		if (%proj.getDatablock().getID() == soccerBallProjectile.getID()) {
@@ -113,6 +119,8 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 	calculateBallTrajectory(%nextPos, %nextVel, %proj, %displayLines, %color, %count, %lastTracerPos);
 }
 
+
+//events
 registerInputEvent("fxDTSBrick", "onPredictedShotHit", "Self fxDTSBrick" TAB "Bot Bot" TAB "Player Player" TAB "Client GameConnection" TAB "MiniGame MiniGame");
 function fxDTSBrick::onPredictedShotHit(%this, %proj)
 {
