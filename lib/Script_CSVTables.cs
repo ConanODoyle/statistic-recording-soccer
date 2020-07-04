@@ -23,7 +23,7 @@ function exportTableAsCSV(%name, %skipAppendTime)
 
 	%file.openForWrite("config/server/tableCSV/" @ %fileName @ ".csv");
 
-	echo("Exporting Table \"" @ %name @ "\" as csv with name \"" @ %name @ "_at_" @ %time @ ".csv\"");
+	echo("Exporting Table \"" @ %name @ "\" as csv - file @ config/server/tableCSV/" @ %name @ "_at_" @ %time @ ".csv");
 
 	for (%i = 0; %i < %count; %i++)
 	{

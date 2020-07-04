@@ -89,10 +89,13 @@ function stopPositionTracking(%tableName)
 	cancel($positionTrackingSchedule);
 	%tableName = getValidTableName(%tableName);
 
-	exportTableAsCSV(%tableName @ "_Pos");
-	exportTableAsCSV(%tableName @ "_Vel");
-	exportTableAsCSV(%tableName @ "_Aim");
-	exportTableAsCSV(%tableName @ "_Ball");
+	%time = getRealTime();
+
+	exportTableAsCSV(%tableName @ "_Pos at " @ %time, 1);
+	exportTableAsCSV(%tableName @ "_Vel at " @ %time, 1);
+	exportTableAsCSV(%tableName @ "_Aim at " @ %time, 1);
+	exportTableAsCSV(%tableName @ "_Ball at " @ %time, 1);
+	echo("Stopped tracking - current time: " @ getDateTime());
 }
 
 
