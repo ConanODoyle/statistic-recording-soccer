@@ -1,6 +1,6 @@
 $projectileGravityFactor = -10.1;
 $minTracerDist = 1;
-
+$dotted = 0;
 
 package NewTracers {
 	function Projectile::onAdd(%proj) {
@@ -87,8 +87,10 @@ function calculateBallTrajectory(%pos, %vel, %displayLines, %color, %count, %las
 
 		if (vectorDist(%lastTracerPos, %nextPos) > $minTracerDist)
 		{
-			// %line = drawLine(%lastTracerPos, %nextPos, %color, 0.1);
-			createBoxMarker(%nextPos, %color, 0.1);
+			if (!$dotted)
+				%line = drawLine(%lastTracerPos, %nextPos, %color, 0.1);
+			else
+				createBoxMarker(%nextPos, %color, 0.1);
 			%lastTracerPos = %nextPos;
 		}
 	}
