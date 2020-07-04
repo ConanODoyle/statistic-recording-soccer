@@ -52,9 +52,9 @@ function positionTrackingLoop(%tableName, %tickNum)
 		{
 			%name = %pl.client.name;
 
-			%posList = %posList TAB %name SPC %pl.getPosition();
-			%eyeList = %eyeList TAB %name SPC %pl.getEyeVector();
-			%velList = %velList TAB %name SPC %pl.getVelocity();
+			%posList = %posList @ "," @ %name TAB %pl.getPosition();
+			%eyeList = %eyeList @ "," @ %name TAB %pl.getEyeVector();
+			%velList = %velList @ "," @ %name TAB %pl.getVelocity();
 		}
 	}
 
@@ -75,9 +75,9 @@ function positionTrackingLoop(%tableName, %tickNum)
 	}
 
 	//table export
-	addTableRow(%tableName @ "_Pos", strReplace(%posList, "\t", ","));
-	addTableRow(%tableName @ "_Vel", strReplace(%velList, "\t", ","));
-	addTableRow(%tableName @ "_Aim", strReplace(%eyeList, "\t", ","));
+	addTableRow(%tableName @ "_Pos", %posList);
+	addTableRow(%tableName @ "_Vel", %velList);
+	addTableRow(%tableName @ "_Aim", %eyeList);
 
 	addTableRow(%tableName @ "_Ball", %tickNum @ "," @ %ballPos @ "," @ %ballVel);
 
