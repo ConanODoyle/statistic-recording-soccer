@@ -1,11 +1,12 @@
 $projectileGravityFactor = -10.1;
 $minTracerDist = 1;
 $dotted = 0;
+$hitPlayer = 0;
 
 package NewTracers {
 	function Projectile::onAdd(%proj) {
 		if (%proj.getDatablock().getID() == soccerBallProjectile.getID()) {
-			calculateBallTrajectory(%proj.initialPosition, %proj.initialVelocity, $tracers, "1 1 0 0.5", 0);
+			calculateBallTrajectory(%proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5", 0);
 		}
 		return parent::onAdd(%proj);
 	}
@@ -15,7 +16,8 @@ package NewTracers {
 			%ret = parent::onCollision(%db, %proj, %hit, %scale, %pos, %norm);
 			// talk(%db SPC %proj SPC %hit SPC %scale SPC %pos SPC %norm);
 			
-			schedule(1, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ $tracers @ ", \"1 1 0 0.5\", 0);");
+			schedule(1, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ 
+				%proj @ ", " @ $tracers @ ", \"1 1 0 0.5\", 0);");
 			createSphereMarker(%proj.getPosition(), "1 0 0 0.5", 0.8);
 			return %ret;
 		}
@@ -25,15 +27,16 @@ package NewTracers {
 activatePackage(NewTracers);
 
 
-function calculateBallTrajectory(%pos, %vel, %displayLines, %color, %count, %lastTracerPos)
+function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos)
 {
-	if (%count == 0 && $debug)
-	{
-		talk("PosVel: " @ %pos @ " | " @ %vel);
-	}
 	if (%count++ > 1000)
 	{
 		return;
+	}
+
+	if (%lastTracerPos $= "")
+	{
+		%lastTracerPos = %pos;
 	}
 
 	%timeStep = 0.01;
@@ -45,7 +48,10 @@ function calculateBallTrajectory(%pos, %vel, %displayLines, %color, %count, %las
 
 	%color = %color $= "" ? "1 1 0 0.5" : %color;
 
-	%masks = $TypeMasks::PlayerObjectType | $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
+	if ($hitPlayer)
+		%masks = $TypeMasks::PlayerObjectType | $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
+	else
+		%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
 
 	//check if too close to ground
 	if (%count > 10)
@@ -60,6 +66,11 @@ function calculateBallTrajectory(%pos, %vel, %displayLines, %color, %count, %las
 				%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
 			}
 			createSphereMarker(%nextPos, "1 1 1 0.5", 0.3);
+
+			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
+			{
+				%hit.onPredictedShotHit(%proj);
+			}
 			return;
 		}
 	}
@@ -75,26 +86,41 @@ function calculateBallTrajectory(%pos, %vel, %displayLines, %color, %count, %las
 			%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
 		}
 		createSphereMarker(%hitloc, "1 1 1 0.5", 0.3);
+
+		if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
+		{
+			%hit.onPredictedShotHit(%proj);
+		}
 		return;
 	}
 
 	if (%displayLines)
 	{
-		if (%lastTracerPos $= "")
-		{
-			%lastTracerPos = %pos;
-		}
 
 		if (vectorDist(%lastTracerPos, %nextPos) > $minTracerDist)
 		{
 			if (!$dotted)
+			{
 				%line = drawLine(%lastTracerPos, %nextPos, %color, 0.1);
+			}
 			else
+			{
 				createBoxMarker(%nextPos, %color, 0.1);
+			}
 			%lastTracerPos = %nextPos;
 		}
 	}
-	calculateBallTrajectory(%nextPos, %nextVel, %displayLines, %color, %count, %lastTracerPos);
+	calculateBallTrajectory(%nextPos, %nextVel, %proj, %displayLines, %color, %count, %lastTracerPos);
 }
 
-function fxDTSBrick::predictedShotHitBrick(%brick, )
+registerInputEvent("fxDTSBrick", "onPredictedShotHit", "Self fxDTSBrick" TAB "Bot Bot" TAB "Player Player" TAB "Client GameConnection" TAB "MiniGame MiniGame");
+function fxDTSBrick::onPredictedShotHit(%this, %proj)
+{
+	$InputTarget_["Self"] = %this;
+	$InputTarget_["Bot"] = %this.hBot;
+	$InputTarget_["Player"] = %proj.client.player;
+	$InputTarget_["Client"] = %proj.client;
+	$InputTarget_["MiniGame"] = getMiniGameFromObject(%proj);
+
+	%this.processInputEvent("onPredictedShotHit", %proj.client);
+}
