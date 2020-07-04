@@ -23,7 +23,8 @@ function initPositionTracking(%tableName)
 	initializeTable(%tableName @ "_Pos");
 	initializeTable(%tableName @ "_Vel");
 	initializeTable(%tableName @ "_Aim");
-	initializeTable(%tableName @ "_Ball");
+	initializeTable(%tableName @ "_BallPos");
+	initializeTable(%tableName @ "_BallVel");
 
 	echo("Starting tracking - using table name \"" @ %tableName @ "\"");
 	positionTrackingLoop(%tableName, 0);
@@ -79,7 +80,8 @@ function positionTrackingLoop(%tableName, %tickNum)
 	addTableRow(%tableName @ "_Vel", %velList);
 	addTableRow(%tableName @ "_Aim", %eyeList);
 
-	addTableRow(%tableName @ "_Ball", %tickNum @ "," @ %ballPos @ "," @ %ballVel);
+	addTableRow(%tableName @ "_BallPos", %tickNum @ "," @ %ballPos);
+	addTableRow(%tableName @ "_BallVel", %tickNum @ "," @ %ballVel);
 
 	$positionTrackingSchedule = schedule(100, MissionCleanup, positionTrackingLoop, %tableName, %tickNum + 1);
 }
@@ -91,10 +93,11 @@ function stopPositionTracking(%tableName)
 
 	%time = getRealTime();
 
-	exportTableAsCSV(%tableName @ "_Pos at " @ %time, 1);
-	exportTableAsCSV(%tableName @ "_Vel at " @ %time, 1);
-	exportTableAsCSV(%tableName @ "_Aim at " @ %time, 1);
-	exportTableAsCSV(%tableName @ "_Ball at " @ %time, 1);
+	exportTableAsCSV(%tableName @ "_Pos", %tablename @ "_Pos at " @ %time);
+	exportTableAsCSV(%tableName @ "_Vel", %tablename @ "_Vel at " @ %time);
+	exportTableAsCSV(%tableName @ "_Aim", %tablename @ "_Aim at " @ %time);
+	exportTableAsCSV(%tableName @ "_BallPos", %tablename @ "_BallPos at " @ %time);
+	exportTableAsCSV(%tableName @ "_BallVel", %tablename @ "_BallVel at " @ %time);
 	echo("Stopped tracking - current time: " @ getDateTime());
 }
 

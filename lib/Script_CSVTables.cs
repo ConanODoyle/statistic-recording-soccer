@@ -6,15 +6,15 @@ function initializeTable(%name)
 	echo("Table \"" @ %name @ "\" initialized");
 }
 
-function exportTableAsCSV(%name, %skipAppendTime)
+function exportTableAsCSV(%name, %specifiedName)
 {
 	%name = getValidTableName(%name);
 	%count = $Table_[%name, "count"];
 
 	%file = new FileObject();
-	if (%skipAppendTime)
+	if (%specifiedName !$= "")
 	{
-		%fileName = %name;
+		%fileName = %specifiedName;
 	}
 	else
 	{
