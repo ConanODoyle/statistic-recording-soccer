@@ -82,7 +82,10 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 			{
 				%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
 			}
-			createSphereMarker(%nextPos, "1 1 1 0.5", 0.3);
+			if ($predictedBallHit)
+			{
+				createSphereMarker(%nextPos, "1 1 1 0.5", 0.3);
+			}
 
 			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
 			{
@@ -146,8 +149,8 @@ function serverCmdToggleTracers(%cl)
 	$tracers = !$tracers;
 	switch ($tracers)
 	{
-		case 0: messageAll('', "\c6Ball tracers have been turned \c2ON");
-		case 1: messageAll('', "\c6Ball tracers have been turned \c0OFF");
+		case 1: messageAll('', "\c6Ball tracers have been turned \c2ON");
+		case 0: messageAll('', "\c6Ball tracers have been turned \c0OFF");
 	}
 }
 
@@ -161,8 +164,8 @@ function serverCmdTogglePrediction(%cl)
 	$predictedBallHit = !$predictedBallHit;
 	switch ($predictedBallHit)
 	{
-		case 0: messageAll('', "\c6Ball hit prediction markers has been turned \c2ON");
-		case 1: messageAll('', "\c6Ball hit prediction markers has been turned \c0OFF");
+		case 1: messageAll('', "\c6Ball hit prediction markers has been turned \c2ON");
+		case 0: messageAll('', "\c6Ball hit prediction markers has been turned \c0OFF");
 	}
 }
 
@@ -176,8 +179,8 @@ function serverCmdToggleHitMarker(%cl)
 	$ballHit = !$ballHit;
 	switch ($ballHit)
 	{
-		case 0: messageAll('', "\c6Ball hit markers has been turned \c2ON");
-		case 1: messageAll('', "\c6Ball hit markers has been turned \c0OFF");
+		case 1: messageAll('', "\c6Ball hit markers has been turned \c2ON");
+		case 0: messageAll('', "\c6Ball hit markers has been turned \c0OFF");
 	}
 }
 
