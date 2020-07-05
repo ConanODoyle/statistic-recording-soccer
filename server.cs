@@ -27,3 +27,5 @@ exec("./src/ballTracing.cs");
 exec("./src/tracking.cs");
 exec("./src/teams.cs");
 exec("./src/utils.cs");
+
+exec("./item/GBFL_Coin.cs");

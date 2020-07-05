@@ -27,8 +27,9 @@ function exportTableAsCSV(%name, %specifiedName)
 
 	for (%i = 0; %i < %count; %i++)
 	{
-		%end = %i < %count - 1 ? "" : "";
-		%file.writeLine(strReplace($Table_[%name, %i], "\t", ",") @ %end);
+		// %end = %i < %count - 1 ? "" : "";
+		// %file.writeLine(strReplace($Table_[%name, %i], "\t", ",") @ %end);
+		%file.writeLine($Table_[%name, %i]);
 	}
 	%file.close();
 }

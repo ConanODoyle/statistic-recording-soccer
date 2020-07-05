@@ -12,6 +12,53 @@ package PositionTracking {
 		}
 		return parent::onAdd(%proj);
 	}
+
+
+
+	function soccerBallProjectile::onRest(%this,%obj,%col,%fade,%pos,%normal)
+	{
+		//don't spawn more than one item
+		//we need this check because onRest can be called immediately after onCollision in the same tick
+		if(%obj.haveSpawnedItem)
+			return;
+	   else
+	      %obj.haveSpawnedItem = 1;
+
+		%item = new item()
+		{
+			dataBlock = "soccerBallItem";
+			scale = %obj.getScale();
+			minigame = getMiniGameFromObject( %obj );//%obj.minigame;
+			spawnBrick = %obj.spawnBrick;
+		};
+		missionCleanup.add(%item);
+		$SoccerBallSimSet.add(%item);
+	   
+		// check if a bot spawned the thing
+		// if( isObject( %obj.sourceObject.spawnBrick ) )
+			// %item.minigame = %obj.sourceObject.spawnBrick.getGroup().client.minigame;
+	   
+		%rot = hGetAnglesFromVector( vectorNormalize(%obj.lVelocity) );
+
+		// let's get the x y normals
+		// %xNorm = mFloor( getWord( %normal, 0 ) );
+		// %yNorm = mFloor( getWord( %normal, 1 ) );
+
+		// echo( %normal SPC ":" SPC %xNorm SPC %yNorm );
+		// let's push the ball back a smidge so it doesn't get stuck in objects
+		//if( %xNorm != 0 || %yNorm != 0 )
+		// %posMod = vectorScale( vectorNormalize( %x SPC %y SPC 0 ), -0.5 );
+		// echo( %posMOd );
+		//else
+		//	%posMod = "0 0 0";
+
+		%item.setTransform( %obj.getPosition() SPC  "0 0 1" SPC %rot); // vectorAdd( %obj.getPosition(), %posMod ) SPC  "0 0 1" SPC %rot);
+		%item.schedulePop();
+		%item.isSportBall = 1;
+
+		// this is done to prevent leaks, so the object is deleted after the function is over.
+		%obj.delete();//%obj.schedule( 0, delete );
+	}
 };
 activatePackage(PositionTracking);
 
@@ -73,6 +120,12 @@ function positionTrackingLoop(%tableName, %tickNum)
 	{
 		%ballPos = %obj.getPosition();
 		%ballVel = %obj.getVelocity();
+	}
+
+	if (%ballPos $= "")
+	{
+		talk("Ball info: " @ %ballInfo);
+		echo("Ball info: " @ %ballInfo);
 	}
 
 	//table export
