@@ -44,3 +44,43 @@ function serverCmdSetPlayerPlaying(%cl, %name, %playing)
 		messageClient(%target, '', "\c3" @ %cl.name @ "\c6 has set you to be an \c0inactive \c6player");
 	}
 }
+
+function serverCmdListActivePlayers(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	for (%i = 0; %i < ClientGroup.getCount(); %i++)
+	{
+		%target = ClientGroup.getObject(%i);
+		if (%target.isPlaying)
+		{
+			messageClient(%cl, '', "\c3" @ %target.name @ "\c6 is an \c2active \c6player");
+		}
+	}
+}
+
+function serverCmdListInactivePlayers(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	for (%i = 0; %i < ClientGroup.getCount(); %i++)
+	{
+		%target = ClientGroup.getObject(%i);
+		if (!%target.isPlaying)
+		{
+			messageClient(%cl, '', "\c3" @ %target.name @ "\c6 is an \c0inactive \c6player");
+		}
+	}
+}
+
+function serverCmdListPlayers(%cl)
+{
+	serverCmdListActivePlayers(%cl);
+	serverCmdListInactivePlayers(%cl);
+}
