@@ -22,6 +22,7 @@ function serverCmdSetPlayerPlaying(%cl, %name, %playing)
 	if (!isObject(%target))
 	{
 		messageClient(%cl, '', "\c5Cannot find player with name \"" @ %name @ "\"!");
+		return;
 	}
 
 	if (%playing $= "")

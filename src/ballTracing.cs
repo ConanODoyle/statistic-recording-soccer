@@ -1,4 +1,4 @@
-$projectileGravityFactor = -10.1;
+$projectileGravityFactor = -9.9;
 $minTracerDist = 1;
 $dotted = 0;
 $hitPlayer = 0;
@@ -84,7 +84,7 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 			}
 			if ($predictedBallHit)
 			{
-				createSphereMarker(%nextPos, "1 1 1 0.5", 0.3);
+				createSphereMarker(%nextPos, "0 0 1 1", 0.3);
 			}
 
 			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
