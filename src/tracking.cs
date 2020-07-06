@@ -65,44 +65,53 @@ activatePackage(PositionTracking);
 
 function initPositionTracking(%tableName)
 {
-	%tableName = getValidTableName(%tableName);
+	%tableName = getSafeArrayName(%tableName);
 
-	initializeTable(%tableName @ "_Pos");
-	initializeTable(%tableName @ "_Vel");
-	initializeTable(%tableName @ "_Aim");
-	initializeTable(%tableName @ "_BallPos");
-	initializeTable(%tableName @ "_BallVel");
-
-	echo("Starting tracking - using table name \"" @ %tableName @ "\"");
-	positionTrackingLoop(%tableName, 0);
-}
-
-function positionTrackingLoop(%tableName, %tickNum)
-{
-	cancel($positionTrackingSchedule);
-	if (%tickNum $= "")
-	{
-		%tickNum = 0;
-	}
-
-	//data we'll be collecting
-	%posList = %tickNum;
-	%eyeList = %tickNum;
-	%velList = %tickNum;
-	%ballPos = "";
-	%ballVel = "";
-
-	//player info
+	//generate list of clients to track (blids)
 	for (%i = 0; %i < ClientGroup.getCount(); %i++)
 	{
-		%pl = ClientGroup.getObject(%i).player;
-		if (isObject(%pl) && %pl.client.isPlaying)
+		%cl = ClientGroup.getObject(%i);
+		if (%cl.isPlaying)
 		{
-			%name = %pl.client.name;
+			%playerList = %playerList SPC %cl.getBLID();
+			%playerListNames = %playerListNames TAB %cl.name;
+		}
+	}
+	%playerList = trim(%playerList);
+	%playerListNames = trim(%playerListNames);
 
-			%posList = %posList @ "," @ %name TAB %pl.getPosition();
-			%eyeList = %eyeList @ "," @ %name TAB %pl.getEyeVector();
-			%velList = %velList @ "," @ %name TAB %pl.getVelocity();
+	echo("Starting tracking - using table name \"" @ %tableName @ "\"");
+	setArrayCount(%tableName, 3);
+	setArrayValue(%tableName, 0, "Player BLID List: " TAB %playerList);
+	setArrayValue(%tableName, 1, "Player Name List: " TAB %playerListNames);
+	setArrayValue(%tableName, 2, "Started recording: " @ getDateTime());
+	printArray(%tableName);
+	positionTrackingLoop(%tableName, %playerList, 0);
+}
+
+function positionTrackingLoop(%tableName, %playerList, %tickNum)
+{
+	cancel($positionTrackingSchedule);
+
+	//player info
+	for (%i = 0; %i < getWordCount(%playerList); %i++)
+	{
+		%blid = getWord(%playerList, %i);
+		%cl = findClientByBL_ID(%blid);
+		%pl = %cl.player;
+		if (isObject(%pl))
+		{
+			%subName = %tableName @ "_" @ %blid;
+			setArrayCount(%subName @ "_Pos", %tickNum + 1);
+			setArrayCount(%subName @ "_Vel", %tickNum + 1);
+			setArrayCount(%subName @ "_Eye", %tickNum + 1);
+			setArrayCount(%subName @ "_Crouch", %tickNum + 1);
+
+			setArrayValue(%subName @ "_Pos", %tickNum, %pl.getPosition());
+			setArrayValue(%subName @ "_Vel", %tickNum, %pl.getVelocity());
+			setArrayValue(%subName @ "_Eye", %tickNum, %pl.getEyeVector());
+			setArrayValue(%subName @ "_Crouch", %tickNum, %pl.isCrouched());
+			// talk("val " @ %tickNum @ " " @ %cl.name @ ": " @ getArrayCount(%subName @ "_Vel") @ " : " @ getArrayValue(%subName @ "_Vel", %tickNum));
 		}
 	}
 
@@ -116,41 +125,34 @@ function positionTrackingLoop(%tableName, %tickNum)
 		%ballPos = %obj.player.getPosition();
 		%ballVel = %obj.name;
 	}
-	else if (%type $= "PROJ")
+	else if (%type $= "WORLD")
 	{
 		%ballPos = %obj.getPosition();
 		%ballVel = %obj.getVelocity();
 	}
 
-	if (%ballPos $= "")
-	{
-		talk("Ball info: " @ %ballInfo);
-		echo("Ball info: " @ %ballInfo);
-	}
+	// if (%ballPos $= "")
+	// {
+	// 	talk("Ball info: " @ %ballInfo);
+	// 	echo("Ball info: " @ %ballInfo);
+	// }
+	setArrayCount(%tableName @ "_BallPos", %tickNum + 1);
+	setArrayCount(%tableName @ "_BallVel", %tickNum + 1);
 
-	//table export
-	addTableRow(%tableName @ "_Pos", %posList);
-	addTableRow(%tableName @ "_Vel", %velList);
-	addTableRow(%tableName @ "_Aim", %eyeList);
+	setArrayValue(%tableName @ "_BallPos", %tickNum, %ballPos);
+	setArrayValue(%tableName @ "_BallVel", %tickNum, %ballVel);
+	
 
-	addTableRow(%tableName @ "_BallPos", %tickNum @ "," @ %ballPos);
-	addTableRow(%tableName @ "_BallVel", %tickNum @ "," @ %ballVel);
-
-	$positionTrackingSchedule = schedule(100, MissionCleanup, positionTrackingLoop, %tableName, %tickNum + 1);
+	$positionTrackingSchedule = schedule(50, MissionCleanup, positionTrackingLoop, %tableName, %playerList, %tickNum + 1);
 }
 
 function stopPositionTracking(%tableName)
 {
 	cancel($positionTrackingSchedule);
-	%tableName = getValidTableName(%tableName);
+	%tableName = getSafeArrayName(%tableName);
 
 	%time = getRealTime();
 
-	exportTableAsCSV(%tableName @ "_Pos", %tablename @ "_Pos at " @ %time);
-	exportTableAsCSV(%tableName @ "_Vel", %tablename @ "_Vel at " @ %time);
-	exportTableAsCSV(%tableName @ "_Aim", %tablename @ "_Aim at " @ %time);
-	exportTableAsCSV(%tableName @ "_BallPos", %tablename @ "_BallPos at " @ %time);
-	exportTableAsCSV(%tableName @ "_BallVel", %tablename @ "_BallVel at " @ %time);
 	echo("Stopped tracking - current time: " @ getDateTime());
 }
 
@@ -189,7 +191,7 @@ function getBallLocation()
 	
 	for (%i = 0; %i < $SoccerBallSimSet.getCount(); %i++)
 	{
-		%ret = %ret TAB "PROJ " @ $SoccerBallSimSet.getObject(%i);
+		%ret = %ret TAB "WORLD " @ $SoccerBallSimSet.getObject(%i);
 	}
 	return trim(%ret);
 }
