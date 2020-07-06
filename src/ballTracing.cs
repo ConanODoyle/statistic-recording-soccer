@@ -195,7 +195,7 @@ function clearTracerCheck(%simset)
 
 
 //commands
-function serverCmdToggleTracers(%cl)
+function serverCmdToggleTracer(%cl)
 {
 	if (!%cl.isAdmin)
 	{
@@ -247,10 +247,15 @@ function serverCmdTracersHelp(%cl)
 		return;
 	}
 
-	messageClient(%cl, '', "\c6/toggleTracers");
-	messageClient(%cl, '', "\c6/togglePrediction");
-	messageClient(%cl, '', "\c6/toggleHitMarker");
+	messageClient(%cl, '', "\c6/toggleTracer or /tracer - display predicted ball trajectory tracers");
+	messageClient(%cl, '', "\c6/togglePrediction or /prediction - display predicted ball hit location");
+	messageClient(%cl, '', "\c6/toggleHitMarker or /hitmarker - display ball hit location");
 }
+
+function serverCmdTracerHelp(%cl) { serverCmdTracersHelp(%cl); }
+function serverCmdTracer(%cl) { serverCmdToggleTracer(%cl); }
+function serverCmdPrediction(%cl) { serverCmdTogglePrediction(%cl); }
+function serverCmdHitMarker(%cl) { serverCmdToggleHitMarker(%cl); }
 
 
 
