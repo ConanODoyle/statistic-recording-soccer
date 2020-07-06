@@ -157,18 +157,75 @@ function replayStep(%tableName, %playerList, %nameList, %step, %speed)
 		return;
 	}
 
+	$lastReplayTableName = %tableName;
+	$lastPlayerList = %playerList;
+	$lastNameList = %nameList;
 	$lastStep = %step;
+	$lastSpeed = %speed;
 	$replaySchedule = schedule(%speed, 0, replayStep, %tableName, %playerList, %nameList, %step + 1, %speed);
 }
 
+
+//commands
 function serverCmdReplay(%cl, %name, %step, %speed)
 {
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
 	startReplay(%name, %step, %speed);
+	%step = %step + 0;
+	%speed = getMax(50, %speed);
 	talk("Replay started for \"" @ %name @ "\" at step " @ %step @ " with speed " @ %speed);
 }
 
 function serverCmdStopReplay(%cl)
 {
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+	
 	cancel($replaySchedule);
-	talk("Stopped at step " @ $lastStep + 0);
+	$BotCleanup.deleteAll();
+	shapeLineSimSet.deleteAll();
+	talk("Stopped \"" @ $tableName @ "\" at step " @ $lastStep + 0);
+}
+
+function serverCmdPauseReplay(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+	
+	cancel($replaySchedule);
+	talk("Paused \"" @ $lastReplayTableName @ "\" at step " @ $lastStep + 0 @ ". /continueReplay to resume");
+}
+
+function serverCmdContinueReplay(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+	
+	startReplay($lastReplayTableName, $lastStep, $lastSpeed);
+	talk("Replay \"" @ $lastReplayTableName @ "\" resumed");
+}
+
+function serverCmdReplayHelp(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+	
+	messageClient(%cl, '', "\c6/replay [replayName] [stepNumber (default 0)] [stepSpeed (minimum 50ms)]");
+	messageClient(%cl, '', "\c6    Replays are recorded in 50 ms intervals");
+	messageClient(%cl, '', "\c6/stopReplay");
+	messageClient(%cl, '', "\c6/pauseReplay");
+	messageClient(%cl, '', "\c6/continueReplay");
+	messageClient(%cl, '', "\c6/replayHelp");
 }

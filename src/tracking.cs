@@ -142,7 +142,7 @@ function positionTrackingLoop(%tableName, %playerList, %tickNum)
 	setArrayValue(%tableName @ "_BallPos", %tickNum, %ballPos);
 	setArrayValue(%tableName @ "_BallVel", %tickNum, %ballVel);
 	
-
+	$lastTrackingTableName = %tableName;
 	$positionTrackingSchedule = schedule(50, MissionCleanup, positionTrackingLoop, %tableName, %playerList, %tickNum + 1);
 }
 
@@ -154,16 +154,6 @@ function stopPositionTracking(%tableName)
 	%time = getRealTime();
 
 	echo("Stopped tracking - current time: " @ getDateTime());
-}
-
-
-function serverCmdStopPositionTracking(%cl, %tablename)
-{
-	if (%tableName $= "")
-	{
-		%tableName = "Soccer";
-	}
-	stopPositionTracking(%tableName);
 }
 
 function getBallLocation()
@@ -194,4 +184,62 @@ function getBallLocation()
 		%ret = %ret TAB "WORLD " @ $SoccerBallSimSet.getObject(%i);
 	}
 	return trim(%ret);
+}
+
+
+
+//commands
+function serverCmdStartTracking(%cl, %tableName)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	if (isEventPending($positionTrackingSchedule))
+	{
+		messageClient(%cl, '', "\c5Tracking is already running! Current recording name: \"\c3" @ $lastTrackingTableName @ "\c5\"");
+		return;
+	}
+
+	initPositionTracking(%tableName);
+	talk("\c6Started tracking - recording to \"\c3" @ getSafeArrayName(%tableName) @ "\c6\"");
+	%blids = getField(getArrayValue(%tableName, 0), 1);
+	%names = getFields(getArrayValue(%tableName, 1), 1, 100);
+
+	messageClient(%cl, '', "\c3-Players being recorded-");
+	for (%i = 0; %i < getWordCount(%blids); %i++)
+	{
+		messageClient(%cl, '', "\c6" @ %i @ ". " @ getField(%names, %i) @ " (" @ getWord(%blids, %i) @ ")");
+	}
+}
+
+function serverCmdStopTracking(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	if (!isEventPending($positionTrackingSchedule))
+	{
+		messageClient(%cl, '', "\c5No tracking is currently running!");
+		return;
+	}
+	
+	stopPositionTracking($lastTrackingTableName);
+	talk("\c6Stopped tracking - data saved to \"\c3" @ $lastTrackingTableName @ "\c6\"");
+}
+
+function serverCmdTrackingHelp(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	messageClient(%cl, '', "\c6/startTracking [replayName]");
+	messageClient(%cl, '', "\c6    Will overwrite existing replays");
+	messageClient(%cl, '', "\c6    If replay already running, will state the replay name");
+	messageClient(%cl, '', "\c6/stopTracking");
 }

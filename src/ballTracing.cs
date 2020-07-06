@@ -1,5 +1,5 @@
 $projectileGravityFactor = -9.9;
-$minTracerDist = 1;
+$minTracerDist = 2;
 $dotted = 0;
 $hitPlayer = 0;
 $ballHit = 0;
@@ -183,6 +183,20 @@ function serverCmdToggleHitMarker(%cl)
 		case 0: messageAll('', "\c6Ball hit markers has been turned \c0OFF");
 	}
 }
+
+function serverCmdTracersHelp(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	messageClient(%cl, '', "\c6/toggleTracers");
+	messageClient(%cl, '', "\c6/togglePrediction");
+	messageClient(%cl, '', "\c6/toggleHitMarker");
+}
+
+
 
 
 
