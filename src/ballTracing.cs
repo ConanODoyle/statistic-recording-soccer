@@ -1,9 +1,11 @@
 $projectileGravityFactor = -9.9;
 $minTracerDist = 2;
-$dotted = 0;
-$hitPlayer = 0;
-$ballHit = 0;
-$predictedBallHit = 0;
+$tracerLifetime = 6000;
+// $hitPlayer = 0;
+// $tracers = 0;
+// $dotted = 0;
+// $ballHit = 0;
+// $predictedBallHit = 0;
 
 datablock StaticShapeData(SoccerBallShape)
 {
@@ -17,6 +19,12 @@ package NewTracers
 	{
 		if (%proj.getDatablock().getID() == soccerBallProjectile.getID())
 		{
+			if ($tracers)
+			{
+				%proj.shapelines = new SimSet();
+				%proj.shapelines.projectile = %proj;
+				clearTracerCheck(%proj.shapelines);
+			}
 			calculateBallTrajectory(%proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5", 0);
 		}
 		return parent::onAdd(%proj);
@@ -34,7 +42,11 @@ package NewTracers
 			
 			if ($ballHit)
 			{
-				createSphereMarker(%proj.getPosition(), "1 0 0 0.5", 0.8);
+				%marker = createSphereMarker(%proj.getPosition(), "1 0 0 0.5", 0.8);
+				if (isObject(%proj.shapelines))
+				{
+					%proj.shapelines.add(%marker);
+				}
 			}
 			return %ret;
 		}
@@ -81,10 +93,18 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 			if (%displayLines)
 			{
 				%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
+				if (isObject(%proj.shapelines))
+				{
+					%proj.shapelines.add(%line);
+				}
 			}
 			if ($predictedBallHit)
 			{
-				createSphereMarker(%nextPos, "0 0 1 1", 0.3);
+				%marker = createSphereMarker(%nextPos, "0 0 1 1", 0.3);
+				if (isObject(%proj.shapelines))
+				{
+					%proj.shapelines.add(%marker);
+				}
 			}
 
 			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
@@ -104,10 +124,18 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 		if (%displayLines)
 		{
 			%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
+			if (isObject(%proj.shapelines))
+			{
+				%proj.shapelines.add(%line);
+			}
 		}
 		if ($predictedBallHit)
 		{
-			createSphereMarker(%hitloc, "1 1 1 0.5", 0.3);
+			%marker = createSphereMarker(%hitloc, "0 0 1 0.5", 0.3);
+			if (isObject(%proj.shapelines))
+			{
+				%proj.shapelines.add(%marker);
+			}
 		}
 
 		if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
@@ -127,15 +155,43 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 			}
 			else
 			{
-				createBoxMarker(%nextPos, %color, 0.1);
+				%marker = createBoxMarker(%nextPos, %color, 0.1);
 			}
 			%lastTracerPos = %nextPos;
+		}
+	}
+
+	if (isObject(%proj.shapelines))
+	{
+		if (%line !$= "")
+		{
+			%proj.shapelines.add(%line);
+		}
+		if (%marker !$= "")
+		{
+			%proj.shapelines.add(%marker);
 		}
 	}
 	calculateBallTrajectory(%nextPos, %nextVel, %proj, %displayLines, %color, %count, %lastTracerPos);
 }
 
+function clearTracerCheck(%simset)
+{
+	cancel(%simset.clearSchedule);
 
+	if (!isObject(%simset.projectile))
+	{
+		if (%simset.hasChecked)
+		{
+			%simset.deleteAll();
+			%simset.delete();
+			return;
+		}
+		%simset.hasChecked = 1;
+	}
+
+	%simset.clearSchedule = schedule($tracerLifetime / 2, %simset, clearTracerCheck, %simset);
+}
 
 
 //commands
