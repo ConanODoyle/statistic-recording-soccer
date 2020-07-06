@@ -13,7 +13,11 @@ package PositionTracking {
 		return parent::onAdd(%proj);
 	}
 
-
+	function PlayerSoccerBallArmor::onAdd(%this, %obj)
+	{
+		$SoccerBallSimSet.add(%obj);
+		parent::onAdd(%this, %obj);
+	}
 
 	function soccerBallProjectile::onRest(%this,%obj,%col,%fade,%pos,%normal)
 	{
@@ -120,10 +124,23 @@ function positionTrackingLoop(%tableName, %playerList, %tickNum)
 	%first = getField(%ballInfo, 0);
 	%type = getWord(%first, 0);
 	%obj = getWord(%first, 1);
+	%extra = getWords(%first, 2, 10);
 	if (%type $= "PLAYER")
 	{
 		%ballPos = %obj.player.getPosition();
 		%ballVel = %obj.name;
+		if (%extra $= "GLOVES")
+		{
+			if (%obj.player.isCrouched())
+			{
+				%ballPos = vectorAdd(%ballPos, vectorScale(%obj.player.getForwardVector(), 1.59));
+			}
+			else
+			{
+				%ballPos = vectorAdd(%ballPos, "0 0 1.2");
+				%ballPos = vectorAdd(%ballPos, vectorScale(%obj.player.getForwardVector(), 0.3));
+			}
+		}
 	}
 	else if (%type $= "WORLD")
 	{
@@ -172,9 +189,9 @@ function getBallLocation()
 					break;
 				}
 			}
-			if (isObject(%pl.BCS_Gloves) && %pl.BCS_Gloves.isNodeVisible("Ball"))
+			if (isObject(%pl.BCS_RightGlove) && %pl.BCS_RightGlove.isNodeVisible("Ball"))
 			{
-				%ret = %ret TAB "PLAYER " @ %pl.client;
+				%ret = %ret TAB "PLAYER " @ %pl.client @ " GLOVES";
 			}
 		}
 	}
