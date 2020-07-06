@@ -25,7 +25,6 @@ function replayStep(%tableName, %playerList, %nameList, %step, %speed)
 	cancel($replaySchedule);
 
 	echo("Replaying \"" @ %tableName @ "\" step " @ %step);
-	shapeLineSimSet.deleteAll();
 
 	//load player positions
 	for (%i = 0; %i < getWordCount(%playerList); %i++)
@@ -76,9 +75,28 @@ function replayStep(%tableName, %playerList, %nameList, %step, %speed)
 			%player = $dummyPlayer_[%blid];
 			%shape = $dummyShape_[%blid];
 			%shape.setTransform(%pos);
-			// %player.setScale("1.25 1.25 2.65");
-			%eyeArrow = drawArrow(vectorAdd(%pos, "0 0 2.15"), %eye, "0 0 1 1", 1, 0.2);
-			// %velArrow = drawArrow(vectorAdd(%pos, "0 0 0.5"), %vel, "1 0 0 1", vectorLen(%vel) / 4, 0.5);
+
+			if (!isObject($eyeArrow_[%blid]))
+			{
+				%eyeArrow = $eyeArrow_[%blid] = drawArrow(vectorAdd(%pos, "0 0 2.15"), %eye, "0 0 1 1", 1, 0.2);
+			}
+			else
+			{
+				%eyepos = vectorAdd(%pos, "0 0 2.15");
+				%eyeArrow = $eyeArrow_[%blid].drawLine(%eyepos, vectorAdd(%eyepos, %eye), "0 0 1 1", 0.2);
+			}
+			
+			if (!isObject($velArrow_[%blid]))
+			{
+				%velArrow = $velArrow_[%blid] = drawArrow(vectorAdd(%pos, "0 0 0.5"), %vel, "1 0 0 1", vectorLen(%vel) / 10, 0.3);
+			}
+			else
+			{
+				%velPos = vectorAdd(%pos, "0 0 0.5");
+				%velVec = vectorScale(%vel, 0.1);
+				%velArrow = $velArrow_[%blid].drawLine(%velPos, vectorAdd(%velPos, %velVec), "1 0 0 1", 0.3);
+			}
+
 			if (%crouch)
 			{
 				%player.setCrouching(1);
@@ -106,18 +124,35 @@ function replayStep(%tableName, %playerList, %nameList, %step, %speed)
 
 	if (%ballPos !$= "")
 	{
-		%ball = createBoxMarker(%ballPos, "1 1 1 0.5", 1);
-		%ball.setDatablock(SoccerBallShape);
-		%ball.unhideNode("ALL");
-		%ball.setNodeColor("ALL", "1 1 1 0.5", 1);
-		if (%ballVel > 0)
+		if (!isObject($BallShape))
 		{
-			%vel = drawArrow(%ballPos, %ballVel, "1 0 1 1", 0.5);
+			%ball = $BallShape = createBoxMarker(%ballPos, "1 1 1 0.5", 1);
+			%ball.setDatablock(SoccerBallShape);
+			%ball.unhideNode("ALL");
+			%ball.setNodeColor("ALL", "1 1 1 0.5", 1);
+		}
+		else
+		{
+			%ball = $BallShape.setTransform(%ballPos);
+		}
+
+		if (vectorLen(%ballVel) > 0)
+		{
+			if (!isObject($BallVectorShape))
+			{
+				%vel = $BallVectorShape = drawArrow(%ballPos, %ballVel, "1 0 1 1", vectorLen(%ballVel) / 10, 0.3);
+			}
+			else
+			{
+				%scaledBallVel = vectorScale(%ballVel, 0.1);
+				%vel = $BallVectorShape.drawLine(%ballPos, vectorAdd(%ballPos, %scaledBallVel), "1 0 1 1", 0.3);
+			}
 		}
 	}
 	if (%ball $= "" && %pos $= "")
 	{
 		$BotCleanup.deleteAll();
+		shapeLineSimSet.deleteAll();
 		talk("Done");
 		return;
 	}
