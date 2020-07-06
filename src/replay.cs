@@ -190,7 +190,7 @@ function serverCmdStopReplay(%cl)
 	cancel($replaySchedule);
 	$BotCleanup.deleteAll();
 	shapeLineSimSet.deleteAll();
-	talk("Stopped \"" @ $tableName @ "\" at step " @ $lastStep + 0);
+	talk("Stopped \"" @ $lastReplayTableName @ "\" at step " @ $lastStep + 0);
 }
 
 function serverCmdPauseReplay(%cl)

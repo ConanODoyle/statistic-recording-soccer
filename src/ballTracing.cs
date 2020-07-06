@@ -19,7 +19,7 @@ package NewTracers
 	{
 		if (%proj.getDatablock().getID() == soccerBallProjectile.getID())
 		{
-			if ($tracers)
+			if ($tracers || $predictedBallHit || $ballHit)
 			{
 				%proj.shapelines = new SimSet();
 				%proj.shapelines.projectile = %proj;
