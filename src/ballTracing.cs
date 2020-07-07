@@ -1,11 +1,15 @@
 $projectileGravityFactor = -9.9;
 $minTracerDist = 2;
+$tracerDistVelocityFactor = 2;
+$tracerDistVelocityBoundary = 10;
 $tracerLifetime = 6000;
-// $hitPlayer = 0;
-// $tracers = 0;
-// $dotted = 0;
-// $ballHit = 0;
-// $predictedBallHit = 0;
+$hitUnraycasted = 1;
+
+$hitPlayer = 0;
+$tracers = 0;
+$dotted = 0;
+$ballHit = 0;
+$predictedBallHit = 0;
 
 datablock StaticShapeData(SoccerBallShape)
 {
@@ -82,6 +86,9 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 	else
 		%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
 
+	if ($hitUnraycasted)
+		%masks = %masks | $TypeMasks::fxBrickAlwaysObjectType;
+
 	//check if too close to ground
 	if (%count > 10) //dont let it hit ground instantly on ball bounce
 	{
@@ -147,7 +154,10 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 
 	if (%displayLines)
 	{
-		if (vectorDist(%lastTracerPos, %nextPos) > $minTracerDist)
+		%dist = $minTracerDist;
+		%dist = $minTracerDist + $tracerDistVelocityFactor * (vectorLen(%vel) - $tracerDistVelocityBoundary) / 10;
+		%dist = getMax(%dist, 0.3);
+		if (vectorDist(%lastTracerPos, %nextPos) > %dist)
 		{
 			if (!$dotted)
 			{
