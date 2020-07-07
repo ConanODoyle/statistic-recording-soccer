@@ -218,7 +218,7 @@ function serverCmdPauseReplay(%cl)
 	talk("Paused \"" @ $lastReplayTableName @ "\" at step " @ $lastStep + 0 @ ". /continueReplay to resume");
 }
 
-function serverCmdRewind(%cl)
+function serverCmdRewindReplay(%cl)
 {
 	if (!%cl.isAdmin)
 	{
@@ -253,6 +253,6 @@ function serverCmdReplayHelp(%cl)
 	messageClient(%cl, '', "\c6    Replays are recorded in 50 ms intervals");
 	messageClient(%cl, '', "\c6/stopReplay");
 	messageClient(%cl, '', "\c6/pauseReplay");
-	messageClient(%cl, '', "\c6/continueReplay");
-	messageClient(%cl, '', "\c6/replayHelp");
+	messageClient(%cl, '', "\c6/rewindReplay - can be done without pausing");
+	messageClient(%cl, '', "\c6/continueReplay - can be done without pausing");
 }
