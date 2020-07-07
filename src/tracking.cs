@@ -79,6 +79,7 @@ function initPositionTracking(%tableName)
 		{
 			%playerList = %playerList SPC %cl.getBLID();
 			%playerListNames = %playerListNames TAB %cl.name;
+			%playerColors = %playerColors TAB %cl.slyrteam.colorrgb;
 		}
 	}
 	%playerList = trim(%playerList);
@@ -89,6 +90,7 @@ function initPositionTracking(%tableName)
 	setArrayValue(%tableName, 0, "Player BLID List: " TAB %playerList);
 	setArrayValue(%tableName, 1, "Player Name List: " TAB %playerListNames);
 	setArrayValue(%tableName, 2, "Started recording: " @ getDateTime());
+	setArrayValue(%tableName, 3, "Player Colors: " TAB %playerColors);
 	printArray(%tableName);
 	positionTrackingLoop(%tableName, %playerList, 0);
 }

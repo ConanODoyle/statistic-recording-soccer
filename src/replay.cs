@@ -3,6 +3,8 @@ if (!isObject($BotCleanup))
 	$BotCleanup = new SimSet(BotCleanup);
 }
 
+$stepDirection = 1;
+
 function startReplay(%tableName, %step, %speed)
 {
 	%tableName = getSafeArrayName(%tableName);
@@ -14,13 +16,14 @@ function startReplay(%tableName, %step, %speed)
 
 	%playerList = getFields(getArrayValue(%tableName, 0), 1, 100);
 	%nameList = getFields(getArrayValue(%tableName, 1), 1, 100);
+	%colorList = getFields(getArrayValue(%tableName, 3), 1, 100);
 	echo("Player List: " @ %playerList);
 	echo("Player Names:" @ %nameList);
 
-	replayStep(%tableName, %playerList, %nameList, %step, %speed);
+	replayStep(%tableName, %playerList, %nameList, %colorList, %step, %speed);
 }
 
-function replayStep(%tableName, %playerList, %nameList, %step, %speed)
+function replayStep(%tableName, %playerList, %nameList, %colorList, %step, %speed)
 {
 	cancel($replaySchedule);
 
@@ -63,6 +66,7 @@ function replayStep(%tableName, %playerList, %nameList, %step, %speed)
 
 				$dummyPlayer_[%blid].setShapeName(%shapeName, 8564862);
 				$dummyPlayer_[%blid].setShapeNameDistance(1000);
+				$dummyPlayer_[%blid].setShapeNameColor(getField(%colorList, %i));
 				$BotCleanup.add($dummyPlayer_[%blid]);
 				$dummyShape_[%blid] = new StaticShape()
 				{
@@ -162,7 +166,7 @@ function replayStep(%tableName, %playerList, %nameList, %step, %speed)
 	$lastNameList = %nameList;
 	$lastStep = %step;
 	$lastSpeed = %speed;
-	$replaySchedule = schedule(%speed, 0, replayStep, %tableName, %playerList, %nameList, %step + 1, %speed);
+	$replaySchedule = schedule(%speed, 0, replayStep, %tableName, %playerList, %nameList, %colorList, %step + $stepDirection, %speed);
 }
 
 
@@ -177,6 +181,7 @@ function serverCmdReplay(%cl, %name, %step, %speed)
 	startReplay(%name, %step, %speed);
 	%step = %step + 0;
 	%speed = getMax(50, %speed);
+	$stepDirection = 1;
 	talk("Replay started for \"" @ %name @ "\" at step " @ %step @ " with speed " @ %speed);
 }
 
@@ -204,6 +209,18 @@ function serverCmdPauseReplay(%cl)
 	talk("Paused \"" @ $lastReplayTableName @ "\" at step " @ $lastStep + 0 @ ". /continueReplay to resume");
 }
 
+function serverCmdRewind(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+	
+	$stepDirection = -1;
+	startReplay($lastReplayTableName, $lastStep, $lastSpeed);
+	talk("Replay \"" @ $lastReplayTableName @ "\" rewinding");	
+}
+
 function serverCmdContinueReplay(%cl)
 {
 	if (!%cl.isAdmin)
@@ -211,6 +228,7 @@ function serverCmdContinueReplay(%cl)
 		return;
 	}
 	
+	$stepDirection = 1;
 	startReplay($lastReplayTableName, $lastStep, $lastSpeed);
 	talk("Replay \"" @ $lastReplayTableName @ "\" resumed");
 }
