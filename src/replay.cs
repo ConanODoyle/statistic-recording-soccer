@@ -92,7 +92,7 @@ function replayStep(%tableName, %playerList, %nameList, %colorList, %step, %spee
 			
 			if (!isObject($velArrow_[%blid]))
 			{
-				%velArrow = $velArrow_[%blid] = drawArrow(vectorAdd(%pos, "0 0 0.5"), %vel, "1 0 0 1", vectorLen(%vel) / 10, 0.3);
+				%velArrow = $velArrow_[%blid] = drawArrow(vectorAdd(%pos, "0 0 0.5"), %vel, "1 0 0 1", vectorLen(%vel) / 8, 0.3);
 			}
 			else
 			{
@@ -144,7 +144,7 @@ function replayStep(%tableName, %playerList, %nameList, %colorList, %step, %spee
 		{
 			if (!isObject($BallVectorShape))
 			{
-				%vel = $BallVectorShape = drawArrow(%ballPos, %ballVel, "1 0 1 1", vectorLen(%ballVel) / 10, 0.3);
+				%vel = $BallVectorShape = drawArrow(%ballPos, %ballVel, "1 0 1 1", vectorLen(%ballVel) / 8, 0.3);
 			}
 			else
 			{
@@ -152,6 +152,15 @@ function replayStep(%tableName, %playerList, %nameList, %colorList, %step, %spee
 				%vel = $BallVectorShape.drawLine(%ballPos, vectorAdd(%ballPos, %scaledBallVel), "1 0 1 1", 0.3);
 			}
 		}
+		else if (isObject($BallVectorShape))
+		{
+			$BallVectorShape.setTransform("0 0 -10");
+			$BallVectorShape.setScale("1 1 1");
+		}
+	}
+	else if (isObject($BallShape))
+	{
+		$BallShape.setTransform("0 0 -10");
 	}
 	if (%ball $= "" && %pos $= "")
 	{
