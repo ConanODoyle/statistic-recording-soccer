@@ -40,8 +40,8 @@ function addTableRow(%name, %a, %b, %c, %d, %e, %f, %g, %h, %i, %j, %k, %l, %m, 
 	%count = $Table_[%name, "count"];
 
 	%data = %a TAB %b TAB %c TAB %d TAB %e TAB %f TAB %g TAB %h TAB %i TAB %j TAB %k TAB %l TAB %m TAB %n;
-	%data = trim(strReplace(%data, " ", "|||"));
-	%data = strReplace(%data, "|||", " ");
+	%data = trim(strReplace(%data, " ", "-|||!"));
+	%data = strReplace(%data, "-|||!", " ");
 	$Table_[%name, %count] = %data;
 	$Table_[%name, "count"] = %count + 1;
 }

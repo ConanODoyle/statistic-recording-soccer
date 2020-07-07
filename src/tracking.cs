@@ -207,6 +207,55 @@ function getBallLocation()
 
 
 
+
+
+//import/export
+
+function exportTracking(%tableName)
+{	
+	%playerList = getFields(getArrayValue(%tableName, 0), 1, 100);
+	%nameList = getFields(getArrayValue(%tableName, 1), 1, 100);
+	%colorList = getFields(getArrayValue(%tableName, 3), 1, 100);
+
+	%tableHeader = strReplace(%playerList, "\t", ",");
+	%subtableHeaders = "_Pos _Vel _Eye _Crouch _BallPos _BallVel"; //for reference
+	%length = getArrayCount(%tableName @ getWord(%playerList, 0) @ "_Pos");
+	%width = getWordCount(%playerList);
+
+	initializeTable(%tableName @ "_" @ getRealTime());
+
+	for (%arrayIDX = 0; %arrayIDX < %length; %arrayIDX++)
+	{
+		%posData = "";
+		%velData = "";
+		%eyeData = "";
+		%crouchData = "";
+		%ballPosData = "";
+		%ballVelData = "";
+
+		for (%playerIDX = 0; %playerIDX < %width; %playerIDX++)
+		{
+			%blid = getWord(%playerList, %playerIDX);
+			%subTableName = %tableName @ "_" @ %blid;
+			%posData = %posData TAB getArrayValue(%subTableName @ "_Pos", %arrayIDX);
+			%velData = %velData TAB getArrayValue(%subTableName @ "_Vel", %arrayIDX);
+			%eyeData = %eyeData TAB getArrayValue(%subTableName @ "_Eye", %arrayIDX);
+			%crouchData = %crouchData TAB getArrayValue(%subTableName @ "_Crouch", %arrayIDX);
+		}
+		%posData = getFields(%posData, 1, 100);
+		%velData = getFields(%velData, 1, 100);
+		%eyeData = getFields(%eyeData, 1, 100);
+		%crouchData = getFields(%crouchData, 1, 100);
+
+		addTableRow()
+
+	}
+}
+
+
+
+
+
 //commands
 function serverCmdStartTracking(%cl, %tableName)
 {
