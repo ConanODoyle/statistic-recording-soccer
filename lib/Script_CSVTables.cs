@@ -9,6 +9,7 @@ function initializeTable(%name)
 function exportTableAsCSV(%name, %specifiedName)
 {
 	%name = getValidTableName(%name);
+	%specifiedName = getValidTableName(%specifiedName);
 	%count = $Table_[%name, "count"];
 
 	%file = new FileObject();
@@ -23,7 +24,7 @@ function exportTableAsCSV(%name, %specifiedName)
 
 	%file.openForWrite("config/server/tableCSV/" @ %fileName @ ".csv");
 
-	echo("Exporting Table \"" @ %name @ "\" as csv - file @ config/server/tableCSV/" @ %name @ "_at_" @ %time @ ".csv");
+	echo("Exporting Table \"" @ %name @ "\" as csv - file @ config/server/tableCSV/" @ %fileName @ ".csv");
 
 	for (%i = 0; %i < %count; %i++)
 	{
