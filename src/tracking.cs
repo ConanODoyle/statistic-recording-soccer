@@ -62,6 +62,7 @@ package PositionTracking {
 
 		// this is done to prevent leaks, so the object is deleted after the function is over.
 		%obj.delete();//%obj.schedule( 0, delete );
+		return %item;
 	}
 };
 activatePackage(PositionTracking);
