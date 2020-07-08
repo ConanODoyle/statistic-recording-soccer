@@ -29,7 +29,9 @@ package NewTracers
 				%proj.shapelines.projectile = %proj;
 				clearTracerCheck(%proj.shapelines);
 			}
-			calculateBallTrajectory(%proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5", 0);
+			//fix for superheader spam
+			cancel($soccerTracerSched);
+			$soccerTracerSched = schedule(33, %proj, calculateBallTrajectory, %proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5", 0);
 		}
 		return parent::onAdd(%proj);
 	}
