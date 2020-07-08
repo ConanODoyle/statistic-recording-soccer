@@ -21,6 +21,7 @@ function startReplay(%tableName, %step, %speed)
 	echo("Player Names:" @ %nameList);
 
 	replayStep(%tableName, %playerList, %nameList, %colorList, %step, %speed);
+	$maxBalls = 0;
 }
 
 function replayStep(%tableName, %playerList, %nameList, %colorList, %step, %speed)
@@ -123,45 +124,57 @@ function replayStep(%tableName, %playerList, %nameList, %colorList, %step, %spee
 	}
 
 	//loadBallPosition
-	%ballPos = getArrayValue(%tableName @ "_BallPos", %step);
-	%ballVel = getArrayValue(%tableName @ "_BallVel", %step);
+	%ballPosList = getArrayValue(%tableName @ "_BallPos", %step);
+	%ballVelList = getArrayValue(%tableName @ "_BallVel", %step);
 
-	if (%ballPos !$= "")
+	for (%i = 0; %i < getMax(getFieldCount(%ballPosList), $maxBalls); %i++)
 	{
-		if (!isObject($BallShape))
+		%ballPos = getField(%ballPosList, %i);
+		%ballVel = getField(%ballVelList, %i);
+		if (%ballPos !$= "")
 		{
-			%ball = $BallShape = createBoxMarker(%ballPos, "1 1 1 0.5", 1);
-			%ball.setDatablock(SoccerBallShape);
-			%ball.unhideNode("ALL");
-			%ball.setNodeColor("ALL", "1 1 1 0.5", 1);
-		}
-		else
-		{
-			%ball = $BallShape.setTransform(%ballPos);
-		}
-
-		if (vectorLen(%ballVel) > 0)
-		{
-			if (!isObject($BallVectorShape))
+			if (!isObject($BallShape[%i]))
 			{
-				%vel = $BallVectorShape = drawArrow(%ballPos, %ballVel, "1 0 1 1", vectorLen(%ballVel) / 8, 0.3);
+				%ball = $BallShape[%i] = createBoxMarker(%ballPos, "1 1 1 0.5", 1);
+				%ball.setDatablock(SoccerBallShape);
+				%ball.unhideNode("ALL");
+				%ball.setNodeColor("ALL", "1 1 1 0.5", 1);
 			}
 			else
 			{
-				%scaledBallVel = vectorScale(%ballVel, 0.1);
-				%vel = $BallVectorShape.drawLine(%ballPos, vectorAdd(%ballPos, %scaledBallVel), "1 0 1 1", 0.3);
+				%ball = $BallShape[%i].setTransform(%ballPos);
+			}
+
+			if (vectorLen(%ballVel) > 0.1)
+			{
+				if (!isObject($BallVectorShape[%i]))
+				{
+					%vel = $BallVectorShape[%i] = drawArrow(%ballPos, %ballVel, "1 0 1 1", vectorLen(%ballVel) / 8, 0.3);
+				}
+				else
+				{
+					%scaledBallVel = vectorScale(%ballVel, 0.1);
+					%vel = $BallVectorShape[%i].drawLine(%ballPos, vectorAdd(%ballPos, %scaledBallVel), "1 0 1 1", 0.3);
+				}
+			}
+			else if (isObject($BallVectorShape[%i]))
+			{
+				$BallVectorShape[%i].setTransform("0 0 -10");
+				$BallVectorShape[%i].setScale("1 1 1");
 			}
 		}
-		else if (isObject($BallVectorShape))
+		else if (isObject($BallShape[%i]))
 		{
-			$BallVectorShape.setTransform("0 0 -10");
-			$BallVectorShape.setScale("1 1 1");
+			$BallShape[%i].setTransform("0 0 -10");
+			if (isObject($BallVectorShape[%i]))
+			{
+				$BallVectorShape[%i].setTransform("0 0 -10");
+				$BallVectorShape[%i].setScale("1 1 1");
+			}
 		}
 	}
-	else if (isObject($BallShape))
-	{
-		$BallShape.setTransform("0 0 -10");
-	}
+	$maxBalls = getMax($maxBalls, %i);
+
 	if (%ball $= "" && %pos $= "")
 	{
 		$BotCleanup.deleteAll();

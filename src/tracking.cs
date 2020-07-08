@@ -79,14 +79,14 @@ function initPositionTracking(%tableName)
 		{
 			%playerList = %playerList SPC %cl.getBLID();
 			%playerListNames = %playerListNames TAB %cl.name;
-			%playerColors = %playerColors TAB %cl.slyrteam.colorrgb;
+			%playerColors = %playerColors TAB (%cl.slyrteam.colorrgb $= "" ? "1 1 1" : %cl.slyrteam.colorrgb);
 		}
 	}
 	%playerList = trim(%playerList);
 	%playerListNames = trim(%playerListNames);
 
 	echo("Starting tracking - using table name \"" @ %tableName @ "\"");
-	setArrayCount(%tableName, 3);
+	setArrayCount(%tableName, 4);
 	setArrayValue(%tableName, 0, "Player BLID List: " TAB %playerList);
 	setArrayValue(%tableName, 1, "Player Name List: " TAB %playerListNames);
 	setArrayValue(%tableName, 2, "Started recording: " @ getDateTime());
@@ -122,39 +122,41 @@ function positionTrackingLoop(%tableName, %playerList, %tickNum)
 	}
 
 	//ball info
-	%ballInfo = getBallLocation();	
-	%first = getField(%ballInfo, 0);
-	%type = getWord(%first, 0);
-	%obj = getWord(%first, 1);
-	%extra = getWords(%first, 2, 10);
-	if (%type $= "PLAYER")
+	%ballInfo = getBallLocation();
+	for (%i = 0; %i < getFieldCount(%ballInfo); %i++)
 	{
-		%ballPos = %obj.player.getPosition();
-		%ballVel = %obj.name;
-		if (%extra $= "GLOVES")
+		%field = getField(%ballInfo, %i);
+		%type = getWord(%field, 0);
+		%obj = getWord(%field, 1);
+		%extra = getWords(%field, 2, 10);
+		if (%type $= "PLAYER")
 		{
-			if (%obj.player.isCrouched())
+			%nextPos = %obj.player.getPosition();
+			%nextVel = %obj.name;
+			if (%extra $= "GLOVES")
 			{
-				%ballPos = vectorAdd(%ballPos, vectorScale(%obj.player.getForwardVector(), 1.59));
-			}
-			else
-			{
-				%ballPos = vectorAdd(%ballPos, "0 0 1.2");
-				%ballPos = vectorAdd(%ballPos, vectorScale(%obj.player.getForwardVector(), 0.3));
+				if (%obj.player.isCrouched())
+				{
+					%nextPos = vectorAdd(%nextPos, vectorScale(%obj.player.getForwardVector(), 1.59));
+				}
+				else
+				{
+					%nextPos = vectorAdd(%nextPos, "0 0 1.2");
+					%nextPos = vectorAdd(%nextPos, vectorScale(%obj.player.getForwardVector(), 0.3));
+				}
 			}
 		}
+		else if (%type $= "WORLD")
+		{
+			%nextPos = %obj.getPosition();
+			%nextVel = %obj.getVelocity();
+		}
+		%ballPos = %ballPos TAB %nextPos;
+		%ballVel = %ballVel TAB %nextVel;
 	}
-	else if (%type $= "WORLD")
-	{
-		%ballPos = %obj.getPosition();
-		%ballVel = %obj.getVelocity();
-	}
-
-	// if (%ballPos $= "")
-	// {
-	// 	talk("Ball info: " @ %ballInfo);
-	// 	echo("Ball info: " @ %ballInfo);
-	// }
+	%ballPos = getFields(%ballPos, 1, 100);
+	%ballVel = getFields(%ballVel, 1, 100);
+	
 	setArrayCount(%tableName @ "_BallPos", %tickNum + 1);
 	setArrayCount(%tableName @ "_BallVel", %tickNum + 1);
 
@@ -185,7 +187,7 @@ function getBallLocation()
 			if (%pl.getMountedImage(0))
 			{
 				%name = %pl.getMountedImage(0).getName();
-				if (strPos($soccerImages, %name) >= 0)
+				if (strPos(strLwr($soccerImages), strLwr(%name)) >= 0)
 				{
 					%ret = %ret TAB "PLAYER " @ %pl.client;
 					break;
@@ -222,7 +224,20 @@ function exportTracking(%tableName)
 	%length = getArrayCount(%tableName @ getWord(%playerList, 0) @ "_Pos");
 	%width = getWordCount(%playerList);
 
-	initializeTable(%tableName @ "_" @ getRealTime());
+	%time = getRealTime();
+	%playerPosTable = %tableName @ "_Players_Pos_" @ %time;
+	%playerVelTable = %tableName @ "_Players_Vel_" @ %time;
+	%playerEyeTable = %tableName @ "_Players_Eye_" @ %time;
+	%playerCrouchTable = %tableName @ "_Players_Crouch_" @ %time;
+	%ballPosTable = %tableName @ "_BallPos_" @ %time;
+	%ballVelTable = %tableName @ "_BallVel_" @ %time;
+
+	initializeTable(%playerPosTable);
+	initializeTable(%playerVelTable);
+	initializeTable(%playerEyeTable);
+	initializeTable(%playerCrouchTable);
+	initializeTable(%ballPosTable);
+	initializeTable(%ballVelTable);
 
 	for (%arrayIDX = 0; %arrayIDX < %length; %arrayIDX++)
 	{
@@ -247,8 +262,16 @@ function exportTracking(%tableName)
 		%eyeData = getFields(%eyeData, 1, 100);
 		%crouchData = getFields(%crouchData, 1, 100);
 
-		addTableRow()
+		addTableRow(%playerPosTable, %posData);
+		addTableRow(%playerVelTable, %velData);
+		addTableRow(%playerEyeTable, %eyeData);
+		addTableRow(%playerCrouchTable, %crouchData);
 
+		%ballPos = getArrayValue(%tableName @ "_BallPos", %arrayIDX);
+		%ballVel = getArrayValue(%tableName @ "_BallPos", %arrayIDX);
+
+		addTableRow(%ballPosTable, strReplace(%ballPos, "\t", ","));
+		addTableRow(%ballPosTable, strReplace(%ballVel, "\t", ","));
 	}
 }
 
