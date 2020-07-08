@@ -1,6 +1,20 @@
 function incStat(%statName, %amount)
 {
-	$Stat_[%statname] += 1;
+	if (!$loadedStats)
+	{
+		loadStats();
+	}
+	$Stat_[%statname] += %amount;
+
+	if ($debug)
+	{
+		talk("$Stat_" @ %statName @ " = " @ $Stat_[%statName] @ " (added " @ %amount @ ")");
+	}
+}
+
+function getStat(%statName)
+{
+	return $Stat_[%statName];
 }
 
 function exportStats()
@@ -11,7 +25,19 @@ function exportStats()
 function loadStats()
 {
 	exec("config/server/BCS Stats/stats.cs");
+	$loadedStats = 1;
 }
+
+function clearStats()
+{
+	deleteVariables("$Stat_*");
+}
+
+
+
+//general assumptions
+//%cl.slyrteam.name is same for players on the same team
+//no more than 1 active ball on the field
 
 
 
@@ -19,37 +45,149 @@ function loadStats()
 //(POS) Possession
 //From the time the ball is picked up to time someone else picks it up
 //Recorded for players and teams
+
+//if $lastPossessedTeam/BLID/Game is unset, no data should be updated
 function obtainPossession(%blid, %team, %game)
 {
 	%lastPossessedTeam = $lastPossessedTeam;
 	%lastPossessedBLID = $lastPossessedBLID;
 	%lastPossessedGame = $lastPossessedGame;
+	%team = getSafeArrayName(%team);
+	%game = getSafeArrayName(%game);
 	%currTime = $Sim::Time;
 
-	//do not record anything if game is not the same
-	if (%lastPossessedGame !$= %game)
+	if ($debug)
+	{
+		talk("obtainPossession: " @ %blid SPC %team SPC %game);
+	}
+
+	//do not record anything if game is not the same, or if the last possessed BLID doesn't exist
+	if (%lastPossessedGame !$= %game || %lastPossessedBLID $= "")
 	{
 		%doNotRecord = 1;
 	}
 
+	//if paused, do not set a new "last possessed"
+	if ($possessionPaused)
+	{
+		%doNotSaveLast = 1;
+	}
+
+	//determine time delta on ownership/team change
 	if (%lastPossessedBLID !$= %blid)
 	{
-		if ($lastPossessedTime[%blid] $= "" || $lastPossessedTime[%blid] == 0)
+		if ($lastPossessedTime[%lastPossessedBLID] $= "" || $lastPossessedTime[%lastPossessedBLID] <= 0)
 		{
-			talk("STAT TRACKING ERROR - last possessed for " @ %blid @ " empty!");
-			return;
+			// talk("STAT TRACKING ERROR - last possessed for player \"" @ %lastPossessedBLID @ "\" is empty!");
+			%doNotRecord = 1;
 		}
 		%lastOwnerTime = %currTime - $lastPossessedTime[%lastPossessedBLID];
+
+		//set ownership start time
 		$lastPossessedTime[%lastPossessedBLID] = "";
 		$lastPossessedTime[%blid] = %currTime;
 	}
+	else
+	{
+		%lastOwnerTime = %currTime - $lastPossessedTime[%blid];
+		$lastPossessedTime[%blid] = %currTime;
+	}
 
-	if ($lastPossessedTime[%team] $= "")
+	if (%lastPossessedTeam !$= %team)
+	{
+		if ($lastPossessedTime[%lastPossessedTeam] $= "" || $lastPossessedTime[%lastPossessedTeam] <= 0)
+		{
+			// talk("STAT TRACKING ERROR - last possessed for team \"" @ %lastPossessedTeam @ "\" is empty!");
+			%doNotRecord = 1;
+		}
+		%lastTeamTime = %currTime - $lastPossessedTime[%lastPossessedTeam];
+
+		//set ownership start time
+		$lastPossessedTime[%lastPossessedTeam] = "";
 		$lastPossessedTime[%team] = %currTime;
+	}
+	else
+	{
+		%lastTeamTime = %currTime - $lastPossessedTime[%team];
+		$lastPossessedTime[%team] = %currTime;
+	}
 
-	$lastPossessedTeam = %team;
-	$lastPossessedBLID = %blid;
+
+	//save data
+	if (!%doNotRecord)
+	{
+		//player specific
+		incStat(%lastPossessedBLID @ "_Possession_Global", %lastOwnerTime);
+		incStat(%lastPossessedBLID @ "_Possession_" @ %game, %lastOwnerTime);
+		//team specific
+		incStat(%lastPossessedTeam @ "_Possession_Global", %lastTeamTime);
+		incStat(%lastPossessedTeam @ "_Possession_" @ %game, %lastTeamTime);
+	}
+
+
+	//save last possessed player for data saving later on
+	if (!%doNotSaveLast)
+	{
+		$lastPossessedTeam = %team;
+		$lastPossessedBLID = %blid;
+		$lastPossessedGame = %game;
+	}
+	else
+	{
+		$lastPossessedTeam = "";
+		$lastPossessedBLID = "";
+		$lastPossessedGame = "";
+	}
 }
+
+function pausePossession(%game)
+{
+	$possessionPaused = 1;
+
+	obtainPossession("", "", %game); //no blid "50"
+
+	if ($debug)
+	{
+		talk("Possession stopped - Time: " @ $Sim::Time);
+	}
+}
+
+function resumePossession(%game)
+{
+	$possessionPaused = 0;
+
+	%location = getBallLocation();
+	%first = getField(%location, 0);
+	if (getWord(%first, 0) $= "PLAYER")
+	{
+		%client = getWord(%first, 1);
+		obtainPossession("", "", %game); //no blid "50"
+		obtainPossession(%client.getBLID(), %client.slyrteam.name, %game);
+	}
+
+	if ($debug)
+	{
+		talk("Possession resumed - Time: " @ $Sim::Time);
+		talk("Locations: " @ %location);
+	}
+}
+
+package BCS_Statistics_Possession
+{
+	function SoccerBallImage::onMount(%this, %obj, %slot)
+	{
+		obtainPossession(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		parent::onMount(%this, %obj, %slot);
+	}
+
+	function SoccerBallStandImage::onMount(%this, %obj, %slot)
+	{
+		obtainPossession(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		parent::onMount(%this, %obj, %slot);
+	}
+};
+activatePackage(BCS_Statistics_Possession);
+
 
 
 
@@ -58,7 +196,44 @@ function obtainPossession(%blid, %team, %game)
 //Ball is tackled, then is possessed for 3s
 //Cannot steal if ball is not possessed by a team for 3s consecutively
 //Recorded for players and teams
+function checkSteal(%)
 
+
+
+package BCS_Statistics_Steal
+{
+	function dropSoccerBall(%obj, %type)
+	{
+		// type, 2 = lob up, 1 = fumble from steal, 0 = normal fumble
+		%ret = parent::dropSoccerBall(%obj, %type);
+		%ball = MissionCleanup.getObject(MissionCleanup.getCount() - 1);
+		if (%ball.getDatablock().getName() $= "soccerBallProjectile" && %type == 1)
+		{
+			%ball.tackled = 1;
+			%ball.droppedByTeam = %obj.client.slyrteam.name;
+			talk("TACKLE DROP");
+		}
+		return %ret;
+	}
+
+	function passBallCheck(%ball, %player, %isBrickItem)
+	{
+		if (%ball.tackled)
+		{
+			%val = parent::passBallCheck(%ball, %player, %isBrickItem);
+			if (%val && %player.)
+			{
+				talk("TACKLE PICKUP!!! by " @ %player.client.name);
+			}
+			return %val;
+		}
+		else
+		{
+			return parent::passBallCheck(%ball, %player, %isBrickItem);
+		}
+	}
+};
+activatePackage(BCS_Statistics_Steal);
 
 
 
