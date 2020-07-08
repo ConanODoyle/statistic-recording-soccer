@@ -213,25 +213,27 @@ function getBallLocation()
 
 //import/export
 
-function exportTracking(%tableName)
+function exportTracking(%tableName, %exportName)
 {	
 	%playerList = getFields(getArrayValue(%tableName, 0), 1, 100);
 	%nameList = getFields(getArrayValue(%tableName, 1), 1, 100);
 	%colorList = getFields(getArrayValue(%tableName, 3), 1, 100);
 
 	%tableHeader = strReplace(%playerList, "\t", ",");
-	%subtableHeaders = "_Pos _Vel _Eye _Crouch _BallPos _BallVel"; //for reference
 	%length = getArrayCount(%tableName @ getWord(%playerList, 0) @ "_Pos");
 	%width = getWordCount(%playerList);
 
 	%time = getRealTime();
-	%playerPosTable = %tableName @ "_Players_Pos_" @ %time;
-	%playerVelTable = %tableName @ "_Players_Vel_" @ %time;
-	%playerEyeTable = %tableName @ "_Players_Eye_" @ %time;
-	%playerCrouchTable = %tableName @ "_Players_Crouch_" @ %time;
-	%ballPosTable = %tableName @ "_BallPos_" @ %time;
-	%ballVelTable = %tableName @ "_BallVel_" @ %time;
+	%exportName = getValidTableName(%exportName);
+	%metadata = %exportName @ "_Metadata"; //player blids, player names, time recorded, player team colors
+	%playerPosTable = %exportName @ "_Players_Pos";
+	%playerVelTable = %exportName @ "_Players_Vel";
+	%playerEyeTable = %exportName @ "_Players_Eye";
+	%playerCrouchTable = %exportName @ "_Players_Crouch";
+	%ballPosTable = %exportName @ "_BallPos";
+	%ballVelTable = %exportName @ "_BallVel";
 
+	initializeTable(%metadata);
 	initializeTable(%playerPosTable);
 	initializeTable(%playerVelTable);
 	initializeTable(%playerEyeTable);
@@ -248,6 +250,7 @@ function exportTracking(%tableName)
 		%ballPosData = "";
 		%ballVelData = "";
 
+		//generate row
 		for (%playerIDX = 0; %playerIDX < %width; %playerIDX++)
 		{
 			%blid = getWord(%playerList, %playerIDX);
@@ -262,6 +265,7 @@ function exportTracking(%tableName)
 		%eyeData = getFields(%eyeData, 1, 100);
 		%crouchData = getFields(%crouchData, 1, 100);
 
+		//add to csv table
 		addTableRow(%playerPosTable, %posData);
 		addTableRow(%playerVelTable, %velData);
 		addTableRow(%playerEyeTable, %eyeData);
@@ -271,9 +275,80 @@ function exportTracking(%tableName)
 		%ballVel = getArrayValue(%tableName @ "_BallPos", %arrayIDX);
 
 		addTableRow(%ballPosTable, strReplace(%ballPos, "\t", ","));
-		addTableRow(%ballPosTable, strReplace(%ballVel, "\t", ","));
+		addTableRow(%ballVelTable, strReplace(%ballVel, "\t", ","));
 	}
+
+	addTableRow(%metadata, getArrayValue(%tableName, 0));
+	addTableRow(%metadata, getArrayValue(%tableName, 1));
+	addTableRow(%metadata, getArrayValue(%tableName, 2));
+	addTableRow(%metadata, getArrayValue(%tableName, 3));
+
+	exportTableAsCSV(%metadata, %metadata);
+	exportTableAsCSV(%playerPosTable, %playerPosTable);
+	exportTableAsCSV(%playerVelTable, %playerVelTable);
+	exportTableAsCSV(%playerEyeTable, %playerEyeTable);
+	exportTableAsCSV(%playerCrouchTable, %playerCrouchTable);
+	exportTableAsCSV(%ballPosTable, %ballPosTable);
+	exportTableAsCSV(%ballVelTable, %ballVelTable);
 }
+
+function importTracking(%tableName, %importName)
+{
+	%importName = getValidTableName(%importName);
+	%tableName = getSafeArrayName(%tableName);
+	%file = new FileObject();
+
+	//load metadata
+	%file.openForRead("config/server/tableCSV/" @ %importName @ "_Metadata.csv");
+	setArrayCount(%tableName, 4);
+	while (!%file.isEOF())
+	{
+		%line = %file.readLine();
+		setArrayValue(%tableName, %i + 0, %line);
+		%i++;
+	}
+	%file.close();
+
+	%playerList = getFields(getArrayValue(%tableName, 0), 1, 100);
+	%nameList = getFields(getArrayValue(%tableName, 1), 1, 100);
+	%colorList = getFields(getArrayValue(%tableName, 3), 1, 100);
+	%columnCount = getFieldCount(%playerList);
+
+	if (%playerList $= "")
+	{
+		talk("Import failed! " @ %tableName SPC %importName);
+		return;
+	}
+
+	//load player data
+	loadIntoArray(%tableName, %importName, %playerList, "Pos");
+	loadIntoArray(%tableName, %importName, %playerList, "Vel");
+	loadIntoArray(%tableName, %importName, %playerList, "Eye");
+	loadIntoArray(%tableName, %importName, %playerList, "Crouch");
+}
+
+function loadIntoArray(%tableName, %importName, %playerList, %suffix)
+{
+	%columnCount = getFieldCount(%playerList);
+	%file.openForRead("config/server/tableCSV/" @ %importName @ "_Players_" @ %suffix);
+	for (%i = 0; !%file.isEOF(); %i++)
+	{
+		%line = %file.readLine();
+		%line = strReplace(%line, ",", "\t");
+		for (%j = 0; %j < %columnCount; %j++)
+		{
+			%blid = getWord(%playerList, %j);
+			%subTableName = %tableName @ "_" @ %blid;
+			setArrayCount(%subTableName @ "_" @ %suffix, %i + 1);
+			setArrayValue(%subTableName @ "_" @ %suffix, %i, getField(%line, %j));
+		}
+	}
+	%file.close();
+}
+
+
+
+
 
 
 
