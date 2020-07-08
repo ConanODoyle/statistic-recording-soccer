@@ -43,7 +43,8 @@ package NewTracers
 			%ret = parent::onCollision(%db, %proj, %hit, %scale, %pos, %norm);
 			// talk(%db SPC %proj SPC %hit SPC %scale SPC %pos SPC %norm);
 			
-			schedule(1, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ 
+			cancel(%proj.tracerSched);
+			%proj.tracerSched = schedule(1, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ 
 				%proj @ ", " @ $tracers @ ", \"1 1 0 0.5\", 0);");
 			
 			if ($ballHit)
