@@ -30,11 +30,11 @@ function saveArray(%aid, %force)
 
 function printArray(%aid, %skipLoad)
 {
-	if (!%skipLoad)
-	{
-		loadArray(%aid);
-		echo("Loaded [" @ %aid @ "] array");
-	}
+	// if (!%skipLoad)
+	// {
+	// 	loadArray(%aid);
+	// 	echo("Loaded [" @ %aid @ "] array");
+	// }
 	echo("Array Array [" @ %aid @ "]");
 
 	%count = getArrayCount(%aid);
