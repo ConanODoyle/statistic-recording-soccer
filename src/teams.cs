@@ -1,9 +1,4 @@
-function GameConnection::setPlaying(%client, %playing)
-{
-	%client.isPlaying = %playing;
-}
-
-function serverCmdSetPlayerPlaying(%cl, %name, %playing)
+function serverCmdSetActive(%cl, %name, %playing)
 {
 	if (!%cl.isAdmin)
 	{
@@ -12,7 +7,7 @@ function serverCmdSetPlayerPlaying(%cl, %name, %playing)
 
 	if (%name $= "")
 	{
-		messageClient(%cl, '', "\c6Usage: /setPlayerPlaying [name] [1 or 0]");
+		messageClient(%cl, '', "\c6Usage: /setActive [name] [1 or 0]");
 		messageClient(%cl, '', "    \c6If [1 or 0] is omitted, the player's playing status is toggled");
 		return;
 	}
@@ -44,6 +39,11 @@ function serverCmdSetPlayerPlaying(%cl, %name, %playing)
 		messageClient(%cl, '', "\c3" @ %target.name @ "\c6 is now an \c0inactive \c6player");
 		messageClient(%target, '', "\c3" @ %cl.name @ "\c6 has set you to be an \c0inactive \c6player");
 	}
+}
+
+function serverCmdSA(%cl, %name, %playing)
+{
+	serverCmdSetActive(%cl, %name, %playing);
 }
 
 function serverCmdListActivePlayers(%cl)
