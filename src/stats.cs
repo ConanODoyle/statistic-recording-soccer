@@ -6,7 +6,7 @@ function incStat(%statName, %amount)
 	}
 	$Stat_[%statname] += %amount;
 
-	if ($debug)
+	if ($debug || $debugStats)
 	{
 		talk("$Stat_" @ %statName @ " = " @ $Stat_[%statName] @ " (added " @ %amount @ ")");
 	}
@@ -196,12 +196,121 @@ activatePackage(BCS_Statistics_Possession);
 //Ball is tackled, then is possessed for 3s
 //Cannot steal if ball is not possessed by a team for 3s consecutively
 //Recorded for players and teams
-function checkSteal(%)
+function attemptSteal(%blidStealer, %teamStealer, %blidStolen, %teamStolen, %game)
+{
+	if (%game !$= $lastStealGame)
+	{
+		if ($debug)
+		{
+			talk("Game mismatch");
+		}
+		$stealPending = 0;
+	}
+
+	// talk("attemptSteal:" @ %blidStealer SPC %teamStealer SPC %blidStolen SPC %teamStolen SPC %game);
+
+	if (!$stealPending)
+	{
+		cancel($updateStealSchedule);
+		$stealPending = 1;
+
+		$lastStealGame = %game;
+		$lastStealByTeam = %teamStealer;
+		$lastStealByPlayer = %blidStealer;
+		$lastStealFromTeam = %teamStolen;
+		$lastStealFromPlayer = %blidStolen;
+		$updateStealSchedule = schedule(5000, MissionCleanup, completeSteal);
+		// talk("Steal now pending - game:" @ $lastStealGame);
+	}
+	else
+	{
+		if ($debug)
+		{
+			talk("Steal is already pending! LastStealFromTeam:" @ $lastStealFromTeam @ " teamStealer:" @ %teamStealer);
+		}
+		if ($lastStealFromTeam $= %teamStealer)
+		{
+			//its a steal back
+			cancel($updateStealSchedule);
+			$stealPending = 0;
+			$lastStealGame = "";
+			$lastStealByTeam = "";
+			$lastStealByPlayer = "";
+			$lastStealFromTeam = "";
+			$lastStealFromPlayer = "";
+		}
+	}
+}
+
+function updateSteal(%blid, %team, %game)
+{
+	if ($debug)
+	{
+		talk("Updating steal: " @ %team SPC $lastStealByTeam);
+	}
+	if ($stealPending && $lastStealByTeam !$= %team)
+	{
+		cancel($updateStealSchedule);
+		$stealPending = 0;
+		$lastStealGame = "";
+		$lastStealByTeam = "";
+		$lastStealByPlayer = "";
+		$lastStealFromTeam = "";
+		$lastStealFromPlayer = "";
+	}
+}
+
+function completeSteal()
+{
+	if (!$stealPending || $lastStealGame $= "" || $lastStealByTeam $= "" || $lastStealByPlayer $= "")
+	{
+		$lastStealGame = "";
+		$lastStealByTeam = "";
+		$lastStealByPlayer = "";
+		$lastStealFromTeam = "";
+		$lastStealFromPlayer = "";
+		return;
+	}
+
+	$stealPending = 0;
+	incStat($lastStealByPlayer @ "_Steal_Global", 1);
+	incStat($lastStealByPlayer @ "_Steal_" @ $lastStealGame, 1);
+	incStat($lastStealByTeam @ "_Steal_Global", 1);
+	incStat($lastStealByTeam @ "_Steal_" @ $lastStealGame, 1);
+
+	$lastStealGame = "";
+	$lastStealByTeam = "";
+	$lastStealByPlayer = "";
+	$lastStealFromTeam = "";
+	$lastStealFromPlayer = "";
+}
 
 
 
 package BCS_Statistics_Steal
 {
+	function SoccerBallImage::onMount(%this, %obj, %slot)
+	{
+		updateSteal(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		parent::onMount(%this, %obj, %slot);
+	}
+
+	function SoccerBallStandImage::onMount(%this, %obj, %slot)
+	{
+		updateSteal(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		parent::onMount(%this, %obj, %slot);
+	}
+
+	function soccerBallItem::onBallCollision(%this, %obj, %col)
+	{
+		parent::onBallCollision(%this, %obj, %col);
+		if (%col.isCrouched() && !%col.isDisabled() && $lastTackledBall !$= "")
+		{
+			talk(%col.client.name @ " TACKLED " @ %obj.client.name);
+			$lastTackledBall.tackledByPlayer = %col.client.getBLID();
+			$lastTackledBall.tackledByTeam = %col.client.slyrteam.name;
+		}
+	}
 	function dropSoccerBall(%obj, %type)
 	{
 		// type, 2 = lob up, 1 = fumble from steal, 0 = normal fumble
@@ -211,19 +320,40 @@ package BCS_Statistics_Steal
 		{
 			%ball.tackled = 1;
 			%ball.droppedByTeam = %obj.client.slyrteam.name;
+			%ball.droppedByPlayer = %obj.client.getBLID();
 			talk("TACKLE DROP");
+			$lastTackledBall = %ball;
 		}
 		return %ret;
 	}
 
 	function passBallCheck(%ball, %player, %isBrickItem)
 	{
-		if (%ball.tackled)
+		if (%ball.tackled && isObject(%player))
 		{
-			%val = parent::passBallCheck(%ball, %player, %isBrickItem);
-			if (%val && %player.)
+			%tackledByTeam = %ball.tackledByTeam;
+			%tackledByPlayer = %ball.tackledByPlayer;
+			%droppedByTeam = %ball.droppedByTeam;
+			%droppedByPlayer = %ball.droppedByPlayer;
+
+			if ($lastStealFromTeam $= %player.client.slyrteam.name)
 			{
-				talk("TACKLE PICKUP!!! by " @ %player.client.name);
+				%doNotSteal = 1;
+			}
+		
+			%val = parent::passBallCheck(%ball, %player, %isBrickItem);
+			if (!%doNotSteal && %val)
+			{
+				if ($debug)
+				{
+					talk("Steal Attempting!");
+				}
+				attemptSteal(%tackledByPlayer, %tackledByTeam, %droppedByPlayer, %droppedByTeam, $currentGame);
+			}
+			if ($debug)
+			{
+				talk("playerteam:" @ %player.client.slyrteam.name);
+				talk("tbt:" @ %tackledByTeam @ " tbp:" @ %tackledByPlayer @ " dpt:" @ %droppedByTeam @ " dbp:" @ %droppedByPlayer);
 			}
 			return %val;
 		}
@@ -232,8 +362,36 @@ package BCS_Statistics_Steal
 			return parent::passBallCheck(%ball, %player, %isBrickItem);
 		}
 	}
+
+	function soccerBallProjectile::onRest(%this,%obj,%col,%fade,%pos,%normal)
+	{
+		%tackled = %obj.tackled;
+
+		%tackledByPlayer = %obj.tackledByPlayer;
+		%tackledByTeam = %obj.tackledByTeam;
+		%droppedByTeam = %obj.droppedByTeam;
+		%droppedByPlayer = %obj.droppedByPlayer;
+
+		%ret = parent::onRest(%this, %obj, %col, %fade, %pos, %normal);
+
+		%ret.tackled = %tackled;
+
+		%ret.tackledByPlayer = %tackledByPlayer;
+		%ret.tackledByTeam = %tackledByTeam;
+		%ret.droppedByTeam = %droppedByTeam;
+		%ret.droppedByPlayer = %droppedByPlayer;
+
+		return %ret;
+	}
 };
-activatePackage(BCS_Statistics_Steal);
+if (!isPackage(PositionTracking))
+{
+	schedule(1000, 0, BCS_Statistics_Steal);
+}
+else
+{
+	activatePackage(BCS_Statistics_Steal);
+}
 
 
 
