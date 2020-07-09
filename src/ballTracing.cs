@@ -4,6 +4,7 @@ $tracerDistVelocityFactor = 2;
 $tracerDistVelocityBoundary = 10;
 $tracerLifetime = 6000;
 $hitUnraycasted = 1;
+$tracerTimestep = 0.008;
 
 $hitPlayer = 0;
 $tracers = 0;
@@ -75,7 +76,7 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 		%lastTracerPos = %pos;
 	}
 
-	%timeStep = 0.01;
+	%timeStep = $tracerTimestep;
 	%gravityFactor = $projectileGravityFactor * %timeStep;
 	%currVel = %vel;
 	%nextVel = vectorAdd(%vel, "0 0 " @ %gravityFactor);
@@ -95,7 +96,7 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 	//check if too close to ground
 	if (%count > 10) //dont let it hit ground instantly on ball bounce
 	{
-		%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.36"), %masks);
+		%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks);
 		%hit = getWord(%ray, 0);
 		%hitloc = getWords(%ray, 1, 3);
 		if (isObject(%hit))
@@ -186,6 +187,133 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %coun
 		}
 	}
 	calculateBallTrajectory(%nextPos, %nextVel, %proj, %displayLines, %color, %count, %lastTracerPos);
+}
+
+function calculateBallTrajectoryIterative(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos)
+{
+	%timeStep = $tracerTimestep;
+	%gravityFactor = $projectileGravityFactor * %timeStep;
+	%lastTracerPos = %pos;
+	%color = %color $= "" ? "1 1 0 0.5" : %color;
+
+	if ($hitPlayer)
+		%masks = $TypeMasks::PlayerObjectType | $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
+	else
+		%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
+
+	while (%count++ < 5000 && !%finished)
+	{
+		%currVel = %vel;
+		%nextVel = vectorAdd(%vel, "0 0 " @ %gravityFactor);
+		%currPos = %pos;
+		%nextPos = vectorAdd(%pos, vectorScale(%vel, %timeStep));
+
+		if ($hitUnraycasted)
+			%masks = %masks | $TypeMasks::fxBrickAlwaysObjectType;
+
+		//check if too close to ground
+		if (%count > 10) //dont let it hit ground instantly on ball bounce
+		{
+			%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks);
+			%hit = getWord(%ray, 0);
+			%hitloc = getWords(%ray, 1, 3);
+			if (isObject(%hit))
+			{
+				if (%displayLines)
+				{
+					%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
+					if (isObject(%proj.shapelines))
+					{
+						%proj.shapelines.add(%line);
+					}
+				}
+				if ($predictedBallHit)
+				{
+					%marker = createSphereMarker(%nextPos, "0 0 1 1", 0.3);
+					if (isObject(%proj.shapelines))
+					{
+						%proj.shapelines.add(%marker);
+					}
+				}
+
+				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
+				{
+					%hit.onPredictedShotHit(%proj);
+				}
+				return;
+			}
+		}
+
+		//check if hit object/player
+		%ray = containerRaycast(%pos, %nextPos, %masks);
+		%hit = getWord(%ray, 0);
+		%hitloc = getWords(%ray, 1, 3);
+		if (isObject(%hit))
+		{
+			if (%displayLines)
+			{
+				%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
+				if (isObject(%proj.shapelines))
+				{
+					%proj.shapelines.add(%line);
+				}
+			}
+			if ($predictedBallHit)
+			{
+				%marker = createSphereMarker(%hitloc, "0 0 1 0.5", 0.3);
+				if (isObject(%proj.shapelines))
+				{
+					%proj.shapelines.add(%marker);
+				}
+			}
+
+			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
+			{
+				%hit.onPredictedShotHit(%proj);
+			}
+			return;
+		}
+
+		if (%displayLines)
+		{
+			%dist = $minTracerDist;
+			%dist = $minTracerDist + $tracerDistVelocityFactor * (vectorLen(%vel) - $tracerDistVelocityBoundary) / 10;
+			%dist = getMax(%dist, 0.3);
+			if (vectorDist(%lastTracerPos, %nextPos) > %dist)
+			{
+				if (!$dotted)
+				{
+					%line = drawLine(%lastTracerPos, %nextPos, %color, 0.1);
+				}
+				else
+				{
+					%marker = createBoxMarker(%nextPos, %color, 0.1);
+				}
+				%lastTracerPos = %nextPos;
+			}
+		}
+
+		if (isObject(%proj.shapelines))
+		{
+			if (%line !$= "")
+			{
+				%proj.shapelines.add(%line);
+			}
+			if (%marker !$= "")
+			{
+				%proj.shapelines.add(%marker);
+			}
+		}
+
+		%pos = %nextPos;
+		%vel = %nextVel;
+
+	}
+}
+
+function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos)
+{
+	calculateBallTrajectoryIterative(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos);
 }
 
 function clearTracerCheck(%simset)
