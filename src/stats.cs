@@ -47,22 +47,22 @@ function clearStats()
 //Recorded for players and teams
 
 //if $lastPossessedTeam/BLID/Game is unset, no data should be updated
-function obtainPossession(%blid, %team, %game)
+function obtainPossession(%blid, %team)
 {
 	%lastPossessedTeam = $lastPossessedTeam;
 	%lastPossessedBLID = $lastPossessedBLID;
 	%lastPossessedGame = $lastPossessedGame;
 	%team = getSafeArrayName(%team);
-	%game = getSafeArrayName(%game);
+	$currentGame = getSafeArrayName($currentGame);
 	%currTime = $Sim::Time;
 
 	if ($debug)
 	{
-		talk("obtainPossession: " @ %blid SPC %team SPC %game);
+		talk("obtainPossession: " @ %blid SPC %team SPC $currentGame);
 	}
 
 	//do not record anything if game is not the same, or if the last possessed BLID doesn't exist
-	if (%lastPossessedGame !$= %game || %lastPossessedBLID $= "")
+	if (%lastPossessedGame !$= $currentGame || %lastPossessedBLID $= "")
 	{
 		%doNotRecord = 1;
 	}
@@ -118,10 +118,10 @@ function obtainPossession(%blid, %team, %game)
 	{
 		//player specific
 		incStat(%lastPossessedBLID @ "_Possession_Global", %lastOwnerTime);
-		incStat(%lastPossessedBLID @ "_Possession_" @ %game, %lastOwnerTime);
+		incStat(%lastPossessedBLID @ "_Possession_" @ $currentGame, %lastOwnerTime);
 		//team specific
 		incStat(%lastPossessedTeam @ "_Possession_Global", %lastTeamTime);
-		incStat(%lastPossessedTeam @ "_Possession_" @ %game, %lastTeamTime);
+		incStat(%lastPossessedTeam @ "_Possession_" @ $currentGame, %lastTeamTime);
 	}
 
 
@@ -130,7 +130,7 @@ function obtainPossession(%blid, %team, %game)
 	{
 		$lastPossessedTeam = %team;
 		$lastPossessedBLID = %blid;
-		$lastPossessedGame = %game;
+		$lastPossessedGame = $currentGame;
 	}
 	else
 	{
@@ -140,11 +140,11 @@ function obtainPossession(%blid, %team, %game)
 	}
 }
 
-function pausePossession(%game)
+function pausePossession()
 {
 	$possessionRecording = 0;
 
-	obtainPossession("", "", %game); //no blid "50"
+	obtainPossession("", "", $currentGame); //no blid "50"
 
 	if ($debug)
 	{
@@ -152,7 +152,7 @@ function pausePossession(%game)
 	}
 }
 
-function resumePossession(%game)
+function resumePossession()
 {
 	$possessionRecording = 1;
 
@@ -161,8 +161,8 @@ function resumePossession(%game)
 	if (getWord(%first, 0) $= "PLAYER")
 	{
 		%client = getWord(%first, 1);
-		obtainPossession("", "", %game); //no blid "50"
-		obtainPossession(%client.getBLID(), %client.slyrteam.name, %game);
+		obtainPossession("", ""); //no blid "50"
+		obtainPossession(%client.getBLID(), %client.slyrteam.name);
 	}
 
 	if ($debug)
@@ -176,13 +176,13 @@ package BCS_Statistics_Possession
 {
 	function SoccerBallImage::onMount(%this, %obj, %slot)
 	{
-		obtainPossession(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		obtainPossession(%obj.client.getBLID(), %obj.client.slyrteam.name);
 		parent::onMount(%this, %obj, %slot);
 	}
 
 	function SoccerBallStandImage::onMount(%this, %obj, %slot)
 	{
-		obtainPossession(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		obtainPossession(%obj.client.getBLID(), %obj.client.slyrteam.name);
 		parent::onMount(%this, %obj, %slot);
 	}
 };
@@ -196,9 +196,9 @@ activatePackage(BCS_Statistics_Possession);
 //Ball is tackled, then is possessed for 3s
 //Cannot steal if ball is not possessed by a team for 3s consecutively
 //Recorded for players and teams
-function attemptSteal(%blidStealer, %teamStealer, %blidStolen, %teamStolen, %game)
+function attemptSteal(%blidStealer, %teamStealer, %blidStolen, %teamStolen)
 {
-	if (%game !$= $lastStealGame)
+	if ($currentGame !$= $lastStealGame)
 	{
 		if ($debug)
 		{
@@ -207,14 +207,14 @@ function attemptSteal(%blidStealer, %teamStealer, %blidStolen, %teamStolen, %gam
 		$stealPending = 0;
 	}
 
-	// talk("attemptSteal:" @ %blidStealer SPC %teamStealer SPC %blidStolen SPC %teamStolen SPC %game);
+	// talk("attemptSteal:" @ %blidStealer SPC %teamStealer SPC %blidStolen SPC %teamStolen SPC $currentGame);
 
 	if (!$stealPending)
 	{
 		cancel($updateStealSchedule);
 		$stealPending = 1;
 
-		$lastStealGame = %game;
+		$lastStealGame = $currentGame;
 		$lastStealByTeam = %teamStealer;
 		$lastStealByPlayer = %blidStealer;
 		$lastStealFromTeam = %teamStolen;
@@ -242,7 +242,7 @@ function attemptSteal(%blidStealer, %teamStealer, %blidStolen, %teamStolen, %gam
 	}
 }
 
-function updateSteal(%blid, %team, %game)
+function updateSteal(%blid, %team)
 {
 	if ($debug)
 	{
@@ -285,7 +285,7 @@ function completeSteal()
 	$lastStealFromPlayer = "";
 }
 
-function pauseSteal(%game)
+function pauseSteal()
 {
 	cancel($updateStealSchedule);
 	$stealPending = 0;
@@ -298,7 +298,7 @@ function pauseSteal(%game)
 	$stealRecording = 0;
 }
 
-function resumeSteal(%game)
+function resumeSteal()
 {
 	$stealRecording = 1;
 }
@@ -307,13 +307,13 @@ package BCS_Statistics_Steal
 {
 	function SoccerBallImage::onMount(%this, %obj, %slot)
 	{
-		updateSteal(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		updateSteal(%obj.client.getBLID(), %obj.client.slyrteam.name);
 		parent::onMount(%this, %obj, %slot);
 	}
 
 	function SoccerBallStandImage::onMount(%this, %obj, %slot)
 	{
-		updateSteal(%obj.client.getBLID(), %obj.client.slyrteam.name, $currentGame);
+		updateSteal(%obj.client.getBLID(), %obj.client.slyrteam.name);
 		parent::onMount(%this, %obj, %slot);
 	}
 
@@ -366,7 +366,7 @@ package BCS_Statistics_Steal
 				{
 					talk("Steal Attempting!");
 				}
-				attemptSteal(%tackledByPlayer, %tackledByTeam, %droppedByPlayer, %droppedByTeam, $currentGame);
+				attemptSteal(%tackledByPlayer, %tackledByTeam, %droppedByPlayer, %droppedByTeam);
 			}
 			if ($debug)
 			{
@@ -417,9 +417,33 @@ else
 //(SOG) Shot on Goal
 //Shot is predicted to hit in opponent's goal (or very very close)
 //Recorded for players and teams
+registerOutputEvent("fxDTSBrick", "detectShotOnGoal", 1);
 function fxDTSBrick::detectShotOnGoal(%brick, %client)
 {
+	if (%client.slyrteam.color != %brick.getColor() && $shotOnGoalRecording)
+	{
+		//different teams - detect shot on goal!
+		%blid = %client.getBLID();
+		%team = %client.slyrteam.name;
+		incStat(%blid @ "_ShotOnGoal_Global", 1);
+		incStat(%blid @ "_ShotOnGoal_" @ $currentGame, 1);
+		incStat(%team @ "_ShotOnGoal_Global", 1);
+		incStat(%team @ "_ShotOnGoal_" @ $currentGame, 1);
+		if ($InputTarget_["Projectile"].client == %client)
+		{
+			$InputTarget_["Projectile"].shotOnGoal = 1;
+		}
+	}
+}
 
+function pauseShotOnGoal()
+{
+	$shotOnGoalRecording = 0;
+}
+
+function resumeShotOnGoal()
+{
+	$shotOnGoalRecording = 1;
 }
 
 

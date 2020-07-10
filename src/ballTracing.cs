@@ -4,6 +4,7 @@ $tracerDistVelocityFactor = 2;
 $tracerDistVelocityBoundary = 10;
 $tracerLifetime = 3000;
 $hitUnraycasted = 1;
+$penetrateUnraycasted = 1;
 $tracerTimestep = 0.032;
 
 $hitPlayer = 0;
@@ -88,7 +89,7 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 		//check if too close to ground
 		if (%count > 10) //dont let it hit ground instantly on ball bounce
 		{
-			%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks);
+			%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks, %ignore);
 			%hit = getWord(%ray, 0);
 			%hitloc = getWords(%ray, 1, 3);
 			if (isObject(%hit))
@@ -110,16 +111,25 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 					}
 				}
 
-				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
+				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%calledPredictedShotHit[%hit])
 				{
 					%hit.onPredictedShotHit(%proj);
+					%calledPredictedShotHit[%hit] = 1;
 				}
-				return;
+				
+				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%hit.isRaycasting() && !$penetrateUnraycasted)
+				{
+					return;
+				}
+				else
+				{
+					%ignore = %hit;
+				}
 			}
 		}
 
 		//check if hit object/player
-		%ray = containerRaycast(%pos, %nextPos, %masks);
+		%ray = containerRaycast(%pos, %nextPos, %masks, %ignore);
 		%hit = getWord(%ray, 0);
 		%hitloc = getWords(%ray, 1, 3);
 		if (isObject(%hit))
@@ -141,11 +151,20 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 				}
 			}
 
-			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
+			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%calledPredictedShotHit[%hit])
 			{
 				%hit.onPredictedShotHit(%proj);
+				%calledPredictedShotHit[%hit] = 1;
 			}
-			return;
+				
+			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%hit.isRaycasting() && !$penetrateUnraycasted)
+			{
+				return;
+			}
+			else
+			{
+				%ignore = %hit;
+			}
 		}
 
 		if (%displayLines)
