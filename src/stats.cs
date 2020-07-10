@@ -417,6 +417,10 @@ else
 //(SOG) Shot on Goal
 //Shot is predicted to hit in opponent's goal (or very very close)
 //Recorded for players and teams
+function fxDTSBrick::detectShotOnGoal(%brick, %client)
+{
+
+}
 
 
 
