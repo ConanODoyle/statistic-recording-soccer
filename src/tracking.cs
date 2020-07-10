@@ -80,11 +80,12 @@ function initPositionTracking(%tableName)
 		{
 			%playerList = %playerList SPC %cl.getBLID();
 			%playerListNames = %playerListNames TAB %cl.name;
-			%playerColors = %playerColors TAB (%cl.slyrteam.colorrgb $= "" ? "1 1 1" : %cl.slyrteam.colorrgb);
+			%playerColors = %playerColors TAB (%cl.slyrteam.colorrgb $= "" ? "1 1 1 1" : %cl.slyrteam.colorrgb);
 		}
 	}
 	%playerList = trim(%playerList);
 	%playerListNames = trim(%playerListNames);
+	%playerColors = trim(%playerColors);
 
 	echo("Starting tracking - using table name \"" @ %tableName @ "\"");
 	setArrayCount(%tableName, 4);
