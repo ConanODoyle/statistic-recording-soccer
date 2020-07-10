@@ -1,10 +1,10 @@
-$projectileGravityFactor = -9.9;
+$projectileGravityFactor = -9.81;
 $minTracerDist = 2;
 $tracerDistVelocityFactor = 2;
 $tracerDistVelocityBoundary = 10;
-$tracerLifetime = 6000;
+$tracerLifetime = 3000;
 $hitUnraycasted = 1;
-$tracerTimestep = 0.008;
+$tracerTimestep = 0.032;
 
 $hitPlayer = 0;
 $tracers = 0;
@@ -32,7 +32,7 @@ package NewTracers
 			}
 			//fix for superheader spam
 			cancel($soccerTracerSched);
-			$soccerTracerSched = schedule(33, %proj, calculateBallTrajectory, %proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5", 0);
+			$soccerTracerSched = schedule(50, %proj, calculateBallTrajectory, %proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5");
 		}
 		return parent::onAdd(%proj);
 	}
@@ -45,8 +45,8 @@ package NewTracers
 			// talk(%db SPC %proj SPC %hit SPC %scale SPC %pos SPC %norm);
 			
 			cancel(%proj.tracerSched);
-			%proj.tracerSched = schedule(1, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ 
-				%proj @ ", " @ $tracers @ ", \"1 1 0 0.5\", 0);");
+			%proj.tracerSched = schedule(50, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ 
+				%proj @ ", " @ $tracers @ ", \"1 1 0 0.5\");");
 			
 			if ($ballHit)
 			{
@@ -63,133 +63,7 @@ package NewTracers
 };
 activatePackage(NewTracers);
 
-
-function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos)
-{
-	if (%count++ > 5000)
-	{
-		return;
-	}
-
-	if (%lastTracerPos $= "")
-	{
-		%lastTracerPos = %pos;
-	}
-
-	%timeStep = $tracerTimestep;
-	%gravityFactor = $projectileGravityFactor * %timeStep;
-	%currVel = %vel;
-	%nextVel = vectorAdd(%vel, "0 0 " @ %gravityFactor);
-	%currPos = %pos;
-	%nextPos = vectorAdd(%pos, vectorScale(%vel, %timeStep));
-
-	%color = %color $= "" ? "1 1 0 0.5" : %color;
-
-	if ($hitPlayer)
-		%masks = $TypeMasks::PlayerObjectType | $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
-	else
-		%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
-
-	if ($hitUnraycasted)
-		%masks = %masks | $TypeMasks::fxBrickAlwaysObjectType;
-
-	//check if too close to ground
-	if (%count > 10) //dont let it hit ground instantly on ball bounce
-	{
-		%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks);
-		%hit = getWord(%ray, 0);
-		%hitloc = getWords(%ray, 1, 3);
-		if (isObject(%hit))
-		{
-			if (%displayLines)
-			{
-				%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
-				if (isObject(%proj.shapelines))
-				{
-					%proj.shapelines.add(%line);
-				}
-			}
-			if ($predictedBallHit)
-			{
-				%marker = createSphereMarker(%nextPos, "0 0 1 1", 0.3);
-				if (isObject(%proj.shapelines))
-				{
-					%proj.shapelines.add(%marker);
-				}
-			}
-
-			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
-			{
-				%hit.onPredictedShotHit(%proj);
-			}
-			return;
-		}
-	}
-
-	//check if hit object/player
-	%ray = containerRaycast(%pos, %nextPos, %masks);
-	%hit = getWord(%ray, 0);
-	%hitloc = getWords(%ray, 1, 3);
-	if (isObject(%hit))
-	{
-		if (%displayLines)
-		{
-			%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
-			if (isObject(%proj.shapelines))
-			{
-				%proj.shapelines.add(%line);
-			}
-		}
-		if ($predictedBallHit)
-		{
-			%marker = createSphereMarker(%hitloc, "0 0 1 0.5", 0.3);
-			if (isObject(%proj.shapelines))
-			{
-				%proj.shapelines.add(%marker);
-			}
-		}
-
-		if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType)
-		{
-			%hit.onPredictedShotHit(%proj);
-		}
-		return;
-	}
-
-	if (%displayLines)
-	{
-		%dist = $minTracerDist;
-		%dist = $minTracerDist + $tracerDistVelocityFactor * (vectorLen(%vel) - $tracerDistVelocityBoundary) / 10;
-		%dist = getMax(%dist, 0.3);
-		if (vectorDist(%lastTracerPos, %nextPos) > %dist)
-		{
-			if (!$dotted)
-			{
-				%line = drawLine(%lastTracerPos, %nextPos, %color, 0.1);
-			}
-			else
-			{
-				%marker = createBoxMarker(%nextPos, %color, 0.1);
-			}
-			%lastTracerPos = %nextPos;
-		}
-	}
-
-	if (isObject(%proj.shapelines))
-	{
-		if (%line !$= "")
-		{
-			%proj.shapelines.add(%line);
-		}
-		if (%marker !$= "")
-		{
-			%proj.shapelines.add(%marker);
-		}
-	}
-	calculateBallTrajectory(%nextPos, %nextVel, %proj, %displayLines, %color, %count, %lastTracerPos);
-}
-
-function calculateBallTrajectoryIterative(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos)
+function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 {
 	%timeStep = $tracerTimestep;
 	%gravityFactor = $projectileGravityFactor * %timeStep;
@@ -206,7 +80,7 @@ function calculateBallTrajectoryIterative(%pos, %vel, %proj, %displayLines, %col
 		%currVel = %vel;
 		%nextVel = vectorAdd(%vel, "0 0 " @ %gravityFactor);
 		%currPos = %pos;
-		%nextPos = vectorAdd(%pos, vectorScale(%vel, %timeStep));
+		%nextPos = vectorAdd(%pos, vectorScale(%nextVel, %timeStep));
 
 		if ($hitUnraycasted)
 			%masks = %masks | $TypeMasks::fxBrickAlwaysObjectType;
@@ -307,13 +181,7 @@ function calculateBallTrajectoryIterative(%pos, %vel, %proj, %displayLines, %col
 
 		%pos = %nextPos;
 		%vel = %nextVel;
-
 	}
-}
-
-function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos)
-{
-	calculateBallTrajectoryIterative(%pos, %vel, %proj, %displayLines, %color, %count, %lastTracerPos);
 }
 
 function clearTracerCheck(%simset)
@@ -403,7 +271,7 @@ function serverCmdHitMarker(%cl) { serverCmdToggleHitMarker(%cl); }
 
 
 //events
-registerInputEvent("fxDTSBrick", "onPredictedShotHit", "Self fxDTSBrick" TAB "Bot Bot" TAB "Player Player" TAB "Client GameConnection" TAB "MiniGame MiniGame");
+registerInputEvent("fxDTSBrick", "onPredictedShotHit", "Self fxDTSBrick" TAB "Bot Bot" TAB "Player Player" TAB "Client GameConnection" TAB "Projectile Projectile" TAB "MiniGame MiniGame");
 function fxDTSBrick::onPredictedShotHit(%this, %proj)
 {
 	$InputTarget_["Self"] = %this;
@@ -411,6 +279,7 @@ function fxDTSBrick::onPredictedShotHit(%this, %proj)
 	$InputTarget_["Player"] = %proj.client.player;
 	$InputTarget_["Client"] = %proj.client;
 	$InputTarget_["MiniGame"] = getMiniGameFromObject(%proj);
+	$InputTarget_["Projectile"] = %proj;
 
 	%this.processInputEvent("onPredictedShotHit", %proj.client);
 }
