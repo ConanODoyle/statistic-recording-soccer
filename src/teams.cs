@@ -41,6 +41,20 @@ function serverCmdSetActive(%cl, %name, %playing)
 	}
 }
 
+function serverCmdRemoveAllActive(%cl)
+{
+	if (!%cl.isAdmin)
+	{
+		return;
+	}
+
+	for (%i = 0; %i < ClientGroup.getCount(); %i++)
+	{
+		ClientGroup.getObject(%i).isPlaying = 0;
+	}
+	messageClient(%cl, '', "\c6Made all players inactive!");
+}
+
 function serverCmdSA(%cl, %name, %playing)
 {
 	serverCmdSetActive(%cl, %name, %playing);
