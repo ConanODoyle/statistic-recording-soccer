@@ -68,7 +68,7 @@ function obtainPossession(%blid, %team, %game)
 	}
 
 	//if paused, do not set a new "last possessed"
-	if ($possessionPaused)
+	if (!$possessionRecording)
 	{
 		%doNotSaveLast = 1;
 	}
@@ -142,7 +142,7 @@ function obtainPossession(%blid, %team, %game)
 
 function pausePossession(%game)
 {
-	$possessionPaused = 1;
+	$possessionRecording = 0;
 
 	obtainPossession("", "", %game); //no blid "50"
 
@@ -154,7 +154,7 @@ function pausePossession(%game)
 
 function resumePossession(%game)
 {
-	$possessionPaused = 0;
+	$possessionRecording = 1;
 
 	%location = getBallLocation();
 	%first = getField(%location, 0);
@@ -219,7 +219,7 @@ function attemptSteal(%blidStealer, %teamStealer, %blidStolen, %teamStolen, %gam
 		$lastStealByPlayer = %blidStealer;
 		$lastStealFromTeam = %teamStolen;
 		$lastStealFromPlayer = %blidStolen;
-		$updateStealSchedule = schedule(5000, MissionCleanup, completeSteal);
+		$updateStealSchedule = schedule(3000, MissionCleanup, completeSteal);
 		// talk("Steal now pending - game:" @ $lastStealGame);
 	}
 	else
@@ -285,7 +285,23 @@ function completeSteal()
 	$lastStealFromPlayer = "";
 }
 
+function pauseSteal(%game)
+{
+	cancel($updateStealSchedule);
+	$stealPending = 0;
+	$lastStealGame = "";
+	$lastStealByTeam = "";
+	$lastStealByPlayer = "";
+	$lastStealFromTeam = "";
+	$lastStealFromPlayer = "";
 
+	$stealRecording = 0;
+}
+
+function resumeSteal(%game)
+{
+	$stealRecording = 1;
+}
 
 package BCS_Statistics_Steal
 {
@@ -306,7 +322,10 @@ package BCS_Statistics_Steal
 		parent::onBallCollision(%this, %obj, %col);
 		if (%col.isCrouched() && !%col.isDisabled() && $lastTackledBall !$= "")
 		{
-			talk(%col.client.name @ " TACKLED " @ %obj.client.name);
+			if ($debug)
+			{
+				talk(%col.client.name @ " TACKLED " @ %obj.client.name);
+			}
 			$lastTackledBall.tackledByPlayer = %col.client.getBLID();
 			$lastTackledBall.tackledByTeam = %col.client.slyrteam.name;
 		}
@@ -321,7 +340,6 @@ package BCS_Statistics_Steal
 			%ball.tackled = 1;
 			%ball.droppedByTeam = %obj.client.slyrteam.name;
 			%ball.droppedByPlayer = %obj.client.getBLID();
-			talk("TACKLE DROP");
 			$lastTackledBall = %ball;
 		}
 		return %ret;
@@ -336,7 +354,7 @@ package BCS_Statistics_Steal
 			%droppedByTeam = %ball.droppedByTeam;
 			%droppedByPlayer = %ball.droppedByPlayer;
 
-			if ($lastStealFromTeam $= %player.client.slyrteam.name)
+			if ($lastStealFromTeam $= %player.client.slyrteam.name || %tackledByTeam $= %droppedByTeam)
 			{
 				%doNotSteal = 1;
 			}
