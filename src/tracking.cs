@@ -275,7 +275,7 @@ function exportTracking(%tableName, %exportName)
 		addTableRow(%playerCrouchTable, %crouchData);
 
 		%ballPos = getArrayValue(%tableName @ "_BallPos", %arrayIDX);
-		%ballVel = getArrayValue(%tableName @ "_BallPos", %arrayIDX);
+		%ballVel = getArrayValue(%tableName @ "_BallVel", %arrayIDX);
 
 		addTableRow(%ballPosTable, strReplace(%ballPos, "\t", ","));
 		addTableRow(%ballVelTable, strReplace(%ballVel, "\t", ","));
@@ -328,6 +328,25 @@ function importTracking(%tableName, %importName)
 	loadIntoArray(%tableName, %importName, %playerList, "Vel");
 	loadIntoArray(%tableName, %importName, %playerList, "Eye");
 	loadIntoArray(%tableName, %importName, %playerList, "Crouch");
+
+	%file1 = new FileObject();
+	%file2 = new FileObject();
+	%file1.openForRead("config/server/tableCSV/" @ %importName @ "_BallPos");
+	%file2.openForRead("config/server/tableCSV/" @ %importName @ "_BallVel");
+	for (%i = 0; !%file1.isEOF(); %i++)
+	{
+		setArrayCount(%tableName @ "_BallPos", %i + 1);
+		setArrayValue(%tableName @ "_BallPos", %i, strReplace(%file1.readLine(), ",", "\t"))
+
+		setArrayCount(%tableName @ "_BallVel", %i + 1);
+		setArrayValue(%tableName @ "_BallVel", %i, strReplace(%file2.readLine(), ",", "\t"))
+	}
+	%file1.close();
+	%file2.close();
+
+	%file.delete();
+	%file1.delete();
+	%file2.delete();
 }
 
 function loadIntoArray(%tableName, %importName, %playerList, %suffix)
