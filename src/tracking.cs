@@ -166,6 +166,7 @@ function positionTrackingLoop(%tableName, %playerList, %tickNum)
 	setArrayValue(%tableName @ "_BallVel", %tickNum, %ballVel);
 	
 	$lastTrackingTableName = %tableName;
+	$lastTick = %tickNum;
 	$positionTrackingSchedule = schedule(50, MissionCleanup, positionTrackingLoop, %tableName, %playerList, %tickNum + 1);
 }
 
