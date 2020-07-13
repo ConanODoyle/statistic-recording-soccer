@@ -8,10 +8,10 @@ $penetrateUnraycasted = 1;
 $tracerTimestep = 0.032;
 
 $hitPlayer = 0;
-$tracers = 0;
-$dotted = 0;
-$ballHit = 0;
-$predictedBallHit = 0;
+// $tracers = 0;
+// $dotted = 0;
+// $ballHit = 0;
+// $predictedBallHit = 0;
 
 datablock StaticShapeData(SoccerBallShape)
 {
@@ -21,10 +21,30 @@ datablock StaticShapeData(SoccerBallShape)
 
 package NewTracers
 {
+	function Player::spawnBall(%obj, %dataBlock, %vel, %noSound)
+	{
+		%p = parent::spawnBall(%obj, %dataBlock, %vel, %noSound);
+		return %p;
+	}
+
 	function Projectile::onAdd(%proj)
 	{
+		%ret = parent::onAdd(%proj);
 		if (%proj.getDatablock().getID() == soccerBallProjectile.getID())
 		{
+			%obj = %proj.sourceObject;
+			if (%obj.client.tracers && $tracers)
+			{
+				%proj.showTracers = 1;
+			}
+			if (%obj.client.predictedBallHit && $predictedBallHit)
+			{
+				%proj.showPredictedHit = 1;
+			}
+			if (%obj.client.ballHit && $ballHit)
+			{
+				%proj.showHitMarkers = 1;
+			}
 			if ($tracers || $predictedBallHit || $ballHit)
 			{
 				%proj.shapelines = new SimSet();
@@ -33,9 +53,10 @@ package NewTracers
 			}
 			//fix for superheader spam
 			cancel($soccerTracerSched);
-			$soccerTracerSched = schedule(50, %proj, calculateBallTrajectory, %proj.initialPosition, %proj.initialVelocity, %proj, $tracers, "1 1 0 0.5");
+			%displayInfo = (%proj.showTracers + 0) SPC (%proj.showPredictedHit + 0);
+			$soccerTracerSched = schedule(50, %proj, calculateBallTrajectory, %proj.initialPosition, %proj.initialVelocity, %proj, %displayInfo, "1 1 0 0.5");
 		}
-		return parent::onAdd(%proj);
+		return %ret;
 	}
 
 	function SoccerBallProjectile::onCollision(%db, %proj, %hit, %scale, %pos, %norm)
@@ -46,10 +67,11 @@ package NewTracers
 			// talk(%db SPC %proj SPC %hit SPC %scale SPC %pos SPC %norm);
 			
 			cancel(%proj.tracerSched);
+			%displayInfo = (%proj.showTracers + 0) SPC (%proj.showPredictedHit + 0);
 			%proj.tracerSched = schedule(50, %proj, eval, "calculateBallTrajectory(" @ %proj @ ".getPosition(), " @ %proj @ ".getVelocity(), " @ 
-				%proj @ ", " @ $tracers @ ", \"1 1 0 0.5\");");
+				%proj @ ", \"" @ %displayInfo @ "\", \"1 1 0 0.5\");");
 			
-			if ($ballHit)
+			if (%proj.showHitMarkers)
 			{
 				%marker = createSphereMarker(%proj.getPosition(), "1 0 0 0.5", 0.8);
 				if (isObject(%proj.shapelines))
@@ -70,11 +92,17 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 	%gravityFactor = $projectileGravityFactor * %timeStep;
 	%lastTracerPos = %pos;
 	%color = %color $= "" ? "1 1 0 0.5" : %color;
+	%tracers = getWord(%displayLines, 0);
+	%predictedHit = getWord(%displayLines, 1);
 
 	if ($hitPlayer)
 		%masks = $TypeMasks::PlayerObjectType | $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
 	else
 		%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType;
+
+	if ($hitUnraycasted)
+		%masks = %masks | $TypeMasks::fxBrickAlwaysObjectType;
+
 
 	while (%count++ < 5000 && !%finished)
 	{
@@ -83,58 +111,13 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 		%currPos = %pos;
 		%nextPos = vectorAdd(%pos, vectorScale(%nextVel, %timeStep));
 
-		if ($hitUnraycasted)
-			%masks = %masks | $TypeMasks::fxBrickAlwaysObjectType;
-
-		//check if too close to ground
-		if (%count > 10) //dont let it hit ground instantly on ball bounce
-		{
-			%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks, %ignore);
-			%hit = getWord(%ray, 0);
-			%hitloc = getWords(%ray, 1, 3);
-			if (isObject(%hit))
-			{
-				if (%displayLines)
-				{
-					%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
-					if (isObject(%proj.shapelines))
-					{
-						%proj.shapelines.add(%line);
-					}
-				}
-				if ($predictedBallHit)
-				{
-					%marker = createSphereMarker(%nextPos, "0 0 1 1", 0.3);
-					if (isObject(%proj.shapelines))
-					{
-						%proj.shapelines.add(%marker);
-					}
-				}
-
-				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%calledPredictedShotHit[%hit])
-				{
-					%hit.onPredictedShotHit(%proj);
-					%calledPredictedShotHit[%hit] = 1;
-				}
-				
-				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%hit.isRaycasting() && !$penetrateUnraycasted)
-				{
-					return;
-				}
-				else
-				{
-					%ignore = %hit;
-				}
-			}
-		}
-
 		//check if hit object/player
 		%ray = containerRaycast(%pos, %nextPos, %masks, %ignore);
 		%hit = getWord(%ray, 0);
 		%hitloc = getWords(%ray, 1, 3);
 		if (isObject(%hit))
 		{
-			if (%displayLines)
+			if (%tracers)
 			{
 				%line = drawLine(%lastTracerPos, %hitloc, %color, 0.1);
 				if (isObject(%proj.shapelines))
@@ -142,7 +125,7 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 					%proj.shapelines.add(%line);
 				}
 			}
-			if ($predictedBallHit)
+			if (%predictedHit)
 			{
 				%marker = createSphereMarker(%hitloc, "0 0 1 0.5", 0.3);
 				if (isObject(%proj.shapelines))
@@ -157,17 +140,59 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 				%calledPredictedShotHit[%hit] = 1;
 			}
 				
-			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%hit.isRaycasting() && !$penetrateUnraycasted)
-			{
-				return;
-			}
-			else
+			if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && $penetrateUnraycasted && !%hit.isRaycasting())
 			{
 				%ignore = %hit;
 			}
+			else
+			{
+				return;
+			}
 		}
 
-		if (%displayLines)
+		//check if too close to ground
+		if (%count > 10) //dont let it hit ground instantly on ball bounce
+		{
+			%ray = containerRaycast(%nextPos, vectorAdd(%nextPos, "0 0 -0.38"), %masks, %ignore);
+			%hit = getWord(%ray, 0);
+			%hitloc = getWords(%ray, 1, 3);
+			if (isObject(%hit))
+			{
+				if (%tracers)
+				{
+					%line = drawLine(%lastTracerPos, %nextPos, %color, 0.1);
+					if (isObject(%proj.shapelines))
+					{
+						%proj.shapelines.add(%line);
+					}
+				}
+				if (%predictedHit)
+				{
+					%marker = createSphereMarker(%nextPos, "0 0 1 1", 0.3);
+					if (isObject(%proj.shapelines))
+					{
+						%proj.shapelines.add(%marker);
+					}
+				}
+
+				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && !%calledPredictedShotHit[%hit])
+				{
+					%hit.onPredictedShotHit(%proj);
+					%calledPredictedShotHit[%hit] = 1;
+				}
+				
+				if (%hit.getType() & $TypeMasks::fxBrickAlwaysObjectType && $penetrateUnraycasted && !%hit.isRaycasting())
+				{
+					%ignore = %hit;
+				}
+				else
+				{
+					return;
+				}
+			}
+		}
+
+		if (%tracers)
 		{
 			%dist = $minTracerDist;
 			%dist = $minTracerDist + $tracerDistVelocityFactor * (vectorLen(%vel) - $tracerDistVelocityBoundary) / 10;
@@ -200,6 +225,10 @@ function calculateBallTrajectory(%pos, %vel, %proj, %displayLines, %color)
 
 		%pos = %nextPos;
 		%vel = %nextVel;
+	}
+	if (%count >= 5000)
+	{
+		talk("Tracers: Safety Overflow");
 	}
 }
 
@@ -237,6 +266,10 @@ function serverCmdToggleTracer(%cl)
 		case 0: messageAll('', "\c6Ball tracers have been turned \c0OFF");
 	}
 }
+function serverCmdToggleTracers(%cl)
+{
+	serverCmdToggleTracer(%cl);
+}
 
 function serverCmdTogglePrediction(%cl)
 {
@@ -251,6 +284,10 @@ function serverCmdTogglePrediction(%cl)
 		case 1: messageAll('', "\c6Ball hit prediction markers has been turned \c2ON");
 		case 0: messageAll('', "\c6Ball hit prediction markers has been turned \c0OFF");
 	}
+}
+function serverCmdTogglePredictor(%cl)
+{
+	serverCmdTogglePrediction(%cl);
 }
 
 function serverCmdToggleHitMarker(%cl)
@@ -267,6 +304,10 @@ function serverCmdToggleHitMarker(%cl)
 		case 0: messageAll('', "\c6Ball hit markers has been turned \c0OFF");
 	}
 }
+function serverCmdToggleHitMarkers(%cl)
+{
+	serverCmdToggleHitMarker(%cl);
+}
 
 function serverCmdTracersHelp(%cl)
 {
@@ -275,16 +316,59 @@ function serverCmdTracersHelp(%cl)
 		return;
 	}
 
-	messageClient(%cl, '', "\c6/toggleTracer or /tracer - display predicted ball trajectory tracers");
-	messageClient(%cl, '', "\c6/togglePrediction or /prediction - display predicted ball hit location");
-	messageClient(%cl, '', "\c6/toggleHitMarker or /hitmarker - display ball hit location");
+	messageClient(%cl, '', "\c6/toggleTracers - Toggle tracers enabled. Admin only.");
+	messageClient(%cl, '', "\c6/togglePrediction - Toggle prediction enabled. Admin only.");
+	messageClient(%cl, '', "\c6/toggleHitMarkers - Toggle hitmarkers. Admin only.");
+	messageClient(%cl, '', "\c6/toggleTracers - Toggle your tracers on or off.");
+	messageClient(%cl, '', "\c6/togglePrediction - Toggle your predictors on or off.");
+	messageClient(%cl, '', "\c6/toggleHitMarkers - Toggle your hit markers on or off.");
 }
 
 function serverCmdTracerHelp(%cl) { serverCmdTracersHelp(%cl); }
-function serverCmdTracer(%cl) { serverCmdToggleTracer(%cl); }
-function serverCmdPrediction(%cl) { serverCmdTogglePrediction(%cl); }
-function serverCmdHitMarker(%cl) { serverCmdToggleHitMarker(%cl); }
 
+
+
+function serverCmdTracer(%cl)
+{
+	%cl.tracers = !%cl.tracers;
+	switch (%cl.tracers)
+	{
+		case 1: messageClient(%cl, '', "\c6Individual ball tracers have been turned \c2ON");
+		case 0: messageClient(%cl, '', "\c6Individual ball tracers have been turned \c0OFF");
+	}
+}
+function serverCmdTracers(%cl)
+{
+	serverCmdTracer(%cl);
+}
+
+function serverCmdPrediction(%cl)
+{
+	%cl.predictedBallHit = !%cl.predictedBallHit;
+	switch (%cl.predictedBallHit)
+	{
+		case 1: messageClient(%cl, '', "\c6Individual ball hit prediction markers has been turned \c2ON");
+		case 0: messageClient(%cl, '', "\c6Individual ball hit prediction markers has been turned \c0OFF");
+	}
+}
+function serverCmdPredictor(%cl)
+{
+	serverCmdPrediction(%cl);
+}
+
+function serverCmdHitMarker(%cl)
+{
+	%cl.ballHit = !%cl.ballHit;
+	switch (%cl.ballHit)
+	{
+		case 1: messageClient(%cl, '', "\c6Individual ball hit markers has been turned \c2ON");
+		case 0: messageClient(%cl, '', "\c6Individual ball hit markers has been turned \c0OFF");
+	}
+}
+function serverCmdHitMarkers(%cl)
+{
+	serverCmdHitMarker(%cl);
+}
 
 
 

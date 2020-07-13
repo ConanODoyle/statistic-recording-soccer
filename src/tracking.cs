@@ -336,10 +336,10 @@ function importTracking(%tableName, %importName)
 	for (%i = 0; !%file1.isEOF(); %i++)
 	{
 		setArrayCount(%tableName @ "_BallPos", %i + 1);
-		setArrayValue(%tableName @ "_BallPos", %i, strReplace(%file1.readLine(), ",", "\t"))
+		setArrayValue(%tableName @ "_BallPos", %i, strReplace(%file1.readLine(), ",", "\t"));
 
 		setArrayCount(%tableName @ "_BallVel", %i + 1);
-		setArrayValue(%tableName @ "_BallVel", %i, strReplace(%file2.readLine(), ",", "\t"))
+		setArrayValue(%tableName @ "_BallVel", %i, strReplace(%file2.readLine(), ",", "\t"));
 	}
 	%file1.close();
 	%file2.close();
