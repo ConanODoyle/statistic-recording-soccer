@@ -7,42 +7,53 @@ function getSafeArrayName(%aid)
 
 function loadArray(%aid, %force)
 {
-	if (!$executedArray[%aid] || %force)
+	if (!isObject("Array_" @ %aid) || %force)
 	{
-		deleteVariables("$Array_" @ %aid @ "*");
-		if (isFile("config/server/Arrays/" @ %aid @ ".cs"))
+		if (isObject("Array_" @ %aid))
 		{
-			exec("config/server/Arrays/" @ %aid @ ".cs");
+			("Array_" @ %aid).delete();
+		}
+		if (isFile("config/server/ScriptObjArrays/" @ %aid @ ".txt"))
+		{
+			readArrayFromFile("config/server/ScriptObjArrays/" @ %aid @ ".txt");
 		}
 		else if (%force)
 		{
 			echo("No Array file found for " @ %aid @ "!");
 		}
 	}
-	$executedArray[%aid] = 1;
 }
 
 function saveArray(%aid, %force)
 {
-	getSafeArrayName(%aid);
-	export("$Array_" @ %aid @ "*", "config/server/Arrays/" @ %aid @ ".cs");
+	//todo - export as file
 }
 
 function printArray(%aid, %skipLoad)
 {
-	// if (!%skipLoad)
-	// {
-	// 	loadArray(%aid);
-	// 	echo("Loaded [" @ %aid @ "] array");
-	// }
-	echo("Array Array [" @ %aid @ "]");
+	echo("ScriptObject Array [Array_" @ %aid @ "]");
 
 	%count = getArrayCount(%aid);
 	echo("Count: " @ %count);
+	%obj = "Array_" @ %aid;
 	for (%i = 0; %i < %count; %i++)
 	{
-		echo(%i @ ": " @$Array_[%aid, %i]);
+		echo(%i @ ": " @ %obj.value[%i]);
 	}
+}
+
+function initArray(%aid)
+{
+	if (!isObject("Array_" @ %aid))
+	{
+		%array = new ScriptObject("Array_" @ %aid);
+		MissionCleanup.add(%array);
+	}
+	else
+	{
+		%array = ("Array_" @ %aid).getID();
+	}
+	return %array;
 }
 
 
@@ -50,37 +61,36 @@ function printArray(%aid, %skipLoad)
 //reads
 function getArrayValue(%aid, %slot)
 {
-	// loadArray(%aid);
-
+	initArray(%aid);
 	%count = getArrayCount(%aid);
+	%obj = "Array_" @ %aid;
 	if (%slot >= %count)
 	{
 		return "";
 	}
 	else
 	{
-		return $Array_[%aid, %slot];
+		return %obj.value[%slot];
 	}
 }
 
 function getArrayCount(%aid)
 {
-	// loadArray(%aid);
-
-	$Array_[%aid, "count"] += 0; //ensure its an integer rather than empty string
-
-	return $Array_[%aid, "count"];
+	initArray(%aid);
+	%obj = "Array_" @ %aid;
+	%obj.count += 0;
+	return %obj.count;
 }
 
 function indexOfArray(%aid, %value, %startIndex)
 {
-	// loadArray(%aid);
-
+	initArray(%aid);
 	%count = getArrayCount(%aid);
+	%obj = "Array_" @ %aid;
 	%startIndex = %startIndex + 0;
 	for (%i = %startIndex; %i < %count; %i++)
 	{
-		if ($Array_[%aid, %i] $= %value)
+		if (%obj.value[%i] $= %value)
 		{
 			return %i;
 		}
@@ -95,31 +105,16 @@ function indexOfArray(%aid, %value, %startIndex)
 //resize %aid to size %count
 function setArrayCount(%aid, %count)
 {
-	// loadArray(%aid);
-
-	if (%count == $Array_[%aid, "count"])
+	initArray(%aid);
+	%obj = "Array_" @ %aid;
+	if (%count > %obj.count)
 	{
-		return;
-	}
-	else if (%count > $Array_[%aid, "count"])
-	{
-		//fill with empty strings
-		for (%i = $Array_[%aid, "count"]; %i < %count; %i++)
+		for (%i = %obj.count; %i < %count; %i++)
 		{
-			$Array_[%aid, %i] = "";
+			%obj.value[%i] = "";
 		}
 	}
-	// else
-	// {
-	// 	//delete values
-	// 	for (%i = $Array_[%aid, "count"]; %i > %count; %i--)
-	// 	{
-	// 		deleteVariables("$Array_" @ %aid @ "_" @ %i);
-	// 	}
-	// }
-	$Array_[%aid, "count"] = %count + 0;
-
-	// saveArray(%aid);
+	%obj.count = %count + 0;
 }
 
 
@@ -127,17 +122,17 @@ function setArrayCount(%aid, %count)
 //%slot IS NOT clamped to %count (can insert past the end of a list)
 function setArrayValue(%aid, %slot, %value)
 {
-	// loadArray(%aid);
-
+	initArray(%aid);
 	%slot = getMax(%slot + 0, 0); //ensure it's not empty string
 	%count = getArrayCount(%aid);
+	%obj = "Array_" @ %aid;
 	if (%slot >= %count)
 	{
 		%count = %slot;
 		setArrayCount(%aid, %count);
 	}
 
-	$Array_[%aid, %slot] = %value;
+	%obj.value[%slot] = %value;
 
 	// saveArray(%aid);
 	return 0;
@@ -146,17 +141,17 @@ function setArrayValue(%aid, %slot, %value)
 //add %value to first available slot in %aid. %start optional
 function addToArray(%aid, %value, %start)
 {
-	// loadArray(%aid);
-
+	initArray(%aid);
 	%start = getMax(%start + 0, 0);
 	%count = getArrayCount(%aid);
+	%obj = "Array_" @ %aid;
 	
 	//place in first available slot
 	for (%i = %start; %i < %count; %i++)
 	{
-		if ($Array_[%aid, %i] $= "")
+		if (%obj.value[%i] $= "")
 		{
-			$Array_[%aid, %i] = %value;
+			%obj.value[%i] = %value;
 			%returnIDX = %i;
 			break;
 		}
@@ -168,27 +163,25 @@ function addToArray(%aid, %value, %start)
 		return -1;
 	}
 
-	// saveArray(%aid);
 	return %returnIDX;
 }
 
 //removes value at %slot
 function removeArrayValue(%aid, %slot)
 {
-	// loadArray(%aid);
-
-	%count = getArrayCount(%aid);
-	$Array_[%aid, %slot] = "";
-
-	// saveArray(%aid);
+	initArray(%aid);
+	%obj = "Array_" @ %aid;
+	%obj.value[%slot] = "";
 }
 
 function clearArray(%aid)
 {
-	deleteVariables("$Array_" @ %aid @ "*");
+	initArray(%aid);
+	%obj = "Array_" @ %aid;
+	%obj.count = 0;
 
-	if (isFile("config/server/Arrays/" @ %aid @ ".cs"))
+	if (isFile("config/server/ScriptObjArrays/" @ %aid @ ".txt"))
 	{
-		fileDelete("config/server/Arrays/" @ %aid @ ".cs");
+		fileDelete("config/server/ScriptObjArrays/" @ %aid @ ".txt");
 	}
 }

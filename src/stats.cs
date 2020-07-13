@@ -451,10 +451,19 @@ function resumeShotOnGoal()
 
 
 //(SVS) Save
-//Opponent's shot is predicted to hit in player's goal, and player stops it (redirect or catch)
-//Player is a goalie
-//Recorded for players and teams
+//Opponent's shot is predicted to hit in goalie's goal, and goalie stops it (redirect or catch)
+//Recorded for goalies and teams
+package BCS_Statistics_Save
+{	
+	function SoccerBallProjectile::onCollision(%db, %proj, %hit, %scale, %pos, %norm)
+	{
+		if (%proj.shotOnGoal && %hit.isGoalie)
+		{
 
+		}
+	}
+};
+activatePackage(BCS_Statistics_Save);
 
 
 

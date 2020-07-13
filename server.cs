@@ -20,7 +20,8 @@
 exec("./lib/Support_ShapeLinesV2/server.cs");
 exec("./lib/Script_CSVTables.cs");
 exec("./lib/Script_FileDownload.cs");
-exec("./lib/globalVarArrays.cs");
+//exec("./lib/globalVarArrays.cs");
+exec("./lib/scriptObjectArrays.cs");
 
 exec("./lib/Server_LagDetector/server.cs");
 
