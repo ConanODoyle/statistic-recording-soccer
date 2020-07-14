@@ -4,6 +4,9 @@ function incStat(%statName, %amount)
 	{
 		loadStats();
 	}
+	%statName = strReplace(%statName, " ", "_");
+	%statName = strReplace(%statName, "-", "_");
+	%statName = stripChars(%statName, "+()=.,;'\":|\\[]{}!@#$%^&*<>?");
 	$Stat_[%statname] += %amount;
 
 	if ($debug || $debugStats)
@@ -14,6 +17,9 @@ function incStat(%statName, %amount)
 
 function getStat(%statName)
 {
+	%statName = strReplace(%statName, " ", "_");
+	%statName = strReplace(%statName, "-", "_");
+	%statName = stripChars(%statName, "+()=.,;'\":|\\[]{}!@#$%^&*<>?");
 	return $Stat_[%statName];
 }
 
@@ -453,15 +459,55 @@ function resumeShotOnGoal()
 //(SVS) Save
 //Opponent's shot is predicted to hit in goalie's goal, and goalie stops it (redirect or catch)
 //Recorded for goalies and teams
+function registerSave(%blid, %team)
+{
+	if (!$savesRecording)
+	{
+		return;
+	}
+
+	incStat(%blid @ "_Saves_Global", 1);
+	incStat(%blid @ "_Saves_" @ $currentGame, 1);
+	incStat(%team @ "_Saves_Global", 1);
+	incStat(%team @ "_Saves_" @ $currentGame, 1);
+}
+
+function pauseSaves()
+{
+	$savesRecording = 0;
+}
+
+function resumeSaves()
+{
+	$savesRecording = 1;
+}
+
 package BCS_Statistics_Save
 {	
 	function SoccerBallProjectile::onCollision(%db, %proj, %hit, %scale, %pos, %norm)
 	{
-		if (%proj.shotOnGoal && %hit.isGoalie)
+		if (%proj.shotOnGoal && %hit.isGoalie 
+			&& %proj.client.slyrteam.name !$= %hit.client.slyrteam.name)
 		{
-
+			%proj.savedBy = %hit.client.getBLID();
+			%proj.savedByTeam = %hit.client.slyrteam.name;
 		}
+		return parent::onCollision(%db, %proj, %hit, %scale, %pos, %norm);
 	}
+
+	function passBallCheck(%ball, %player, %isBrickItem)
+	{
+		%savedBy = %ball.savedBy;
+		%savedyByTeam = %ball.savedByTeam;
+		%ret = parent::passBallCheck(%ball, %player, %isBrickItem);
+		if (%savedBy !$= "" && %ret)
+		{
+			registerSave(%savedBy, %savedByTeam);
+		}
+		return %ret;
+	}
+
+	//todo goalie glove pickup
 };
 activatePackage(BCS_Statistics_Save);
 
