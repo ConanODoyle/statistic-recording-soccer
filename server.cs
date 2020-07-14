@@ -32,3 +32,6 @@ exec("./src/replay.cs");
 exec("./src/utils.cs");
 
 exec("./item/GBFL_Coin.cs");
+exec("./item/GBFL_ChallengeFlag.cs");
+
+exec("./GBFL_Support.cs");
