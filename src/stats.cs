@@ -472,6 +472,14 @@ function registerSave(%blid, %team)
 	incStat(%team @ "_Saves_" @ $currentGame, 1);
 }
 
+registerOutputEvent("Projectile", "goalDelete");
+function Projectile::goalDelete(%proj)
+{
+	%proj.savedBy = "";
+	%proj.savedByTeam = "";
+	%proj.delete();
+}
+
 function pauseSaves()
 {
 	$savesRecording = 0;
@@ -507,7 +515,14 @@ package BCS_Statistics_Save
 		return %ret;
 	}
 
-	//todo goalie glove pickup
+	function Projectile::delete(%proj)
+	{
+		if (%proj.savedBy !$= "")
+		{
+			registerSave(%proj.savedBy, %proj.savedByTeam);
+		}
+		return parent::delete(%proj);
+	}
 };
 activatePackage(BCS_Statistics_Save);
 
